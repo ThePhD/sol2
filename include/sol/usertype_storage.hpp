@@ -173,7 +173,7 @@ namespace sol { namespace u_detail {
 	}
 
 	struct string_for_each_metatable_func {
-		bool is_destroyion = false;
+		bool is_destruction = false;
 		bool is_index = false;
 		bool is_new_index = false;
 		bool is_static_index = false;
@@ -207,7 +207,7 @@ namespace sol { namespace u_detail {
 			if (poison_indexing) {
 				(usb.*change_indexing)(L_, smt_, p_derived_usb, t, idx_call, new_idx_call, meta_idx_call, meta_new_idx_call);
 			}
-			if (is_destroyion
+			if (is_destruction
 				&& (smt_ == submetatable_type::reference || smt_ == submetatable_type::const_reference || smt_ == submetatable_type::named
 				     || smt_ == submetatable_type::unique)) {
 				// gc does not apply to us here
@@ -473,45 +473,47 @@ namespace sol { namespace u_detail {
 
 		template <bool is_new_index = false, bool base_walking = false, bool from_named_metatable = false, typename... Bases>
 		static inline int self_index_call(types<Bases...>, lua_State* L, usertype_storage_base& self) {
-			type k_type = stack::get<type>(L, 2);
-			if (k_type == type::string) {
-				index_call_storage* target = nullptr;
-				{
+			if constexpr (!from_named_metatable || !is_new_index) {
+				type k_type = stack::get<type>(L, 2);
+				if (k_type == type::string) {
+					index_call_storage* target = nullptr;
 					string_view k = stack::get<string_view>(L, 2);
-					auto it = self.string_keys.find(k);
-					if (it != self.string_keys.cend()) {
-						target = &it->second;
+					{
+						auto it = self.string_keys.find(k);
+						if (it != self.string_keys.cend()) {
+							target = &it->second;
+						}
+					}
+					if (target != nullptr) {
+						// let the target decide what to do, unless it's named...
+						if constexpr (is_new_index) {
+							return (target->new_index)(L, target->binding_data);
+						}
+						else {
+							return (target->index)(L, target->binding_data);
+						}
 					}
 				}
-				if (target != nullptr) {
-					// let the target decide what to do
-					if constexpr (is_new_index) {
-						return (target->new_index)(L, target->binding_data);
+				else if (k_type != type::lua_nil && k_type != type::none) {
+					stateless_reference* target = nullptr;
+					{
+						stack_reference k = stack::get<stack_reference>(L, 2);
+						auto it = self.auxiliary_keys.find(k);
+						if (it != self.auxiliary_keys.cend()) {
+							target = &it->second;
+						}
 					}
-					else {
-						return (target->index)(L, target->binding_data);
-					}
-				}
-			}
-			else if (k_type != type::lua_nil && k_type != type::none) {
-				stateless_reference* target = nullptr;
-				{
-					stack_reference k = stack::get<stack_reference>(L, 2);
-					auto it = self.auxiliary_keys.find(k);
-					if (it != self.auxiliary_keys.cend()) {
-						target = &it->second;
-					}
-				}
-				if (target != nullptr) {
-					if constexpr (is_new_index) {
-						// set value and return
-						target->reset(L, 3);
-						return 0;
-					}
-					else {
-						// push target to return
-						// what we found
-						return stack::push(L, *target);
+					if (target != nullptr) {
+						if constexpr (is_new_index) {
+							// set value and return
+							target->reset(L, 3);
+							return 0;
+						}
+						else {
+							// push target to return
+							// what we found
+							return stack::push(L, *target);
+						}
 					}
 				}
 			}
@@ -707,7 +709,7 @@ namespace sol { namespace u_detail {
 			bool is_new_index = (s == to_string(meta_function::new_index));
 			bool is_static_index = (s == to_string(meta_function::static_index));
 			bool is_static_new_index = (s == to_string(meta_function::static_new_index));
-			bool is_destroyion = s == to_string(meta_function::garbage_collect);
+			bool is_destruction = s == to_string(meta_function::garbage_collect);
 			bool poison_indexing = (!is_using_index || !is_using_new_index) && (is_var_bind::value || is_index || is_new_index);
 			void* derived_this = static_cast<void*>(static_cast<usertype_storage<T>*>(this));
 			index_call_storage ics;
@@ -718,7 +720,7 @@ namespace sol { namespace u_detail {
 				                                               : &Binding::template index_call_with_<false, is_var_bind::value>;
 
 			string_for_each_metatable_func for_each_fx;
-			for_each_fx.is_destroyion = is_destroyion;
+			for_each_fx.is_destruction = is_destruction;
 			for_each_fx.is_index = is_index;
 			for_each_fx.is_new_index = is_new_index;
 			for_each_fx.is_static_index = is_static_index;

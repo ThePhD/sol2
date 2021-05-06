@@ -22,16 +22,12 @@
 
 # # # # sol2
 # # # Required minimum version statement
-cmake_minimum_required(VERSION 3.15.0)
+cmake_minimum_required(VERSION 3.16.0)
+# # # Project Include - file that is included after project declaration is finished
+set(CMAKE_PROJECT_INCLUDE "${CMAKE_SOURCE_DIR}/cmake/Includes/Project.cmake")
 
 # # # project declaration
 project(sol2 VERSION 4.0.0 LANGUAGES CXX C)
-
-# # # Modules
-# # Include modules useful to the project, whether locally made in our own cmake DIRECTORY
-# # our from the standard cmake libraries
-# Add home-rolled modules path to front of module path list
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules" "${CMAKE_MODULE_PATH}")
 
 if (PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
 	set(SOL2_IS_TOP_LEVEL TRUE)
@@ -78,23 +74,8 @@ CMAKE_DEPENDENT_OPTION(BUILD_LUA_AS_DLL "Build Lua as a DLL" ON
 	"SOL2_BUILD_LUA" OFF)
 
 
-# # # Platform
-# Detect x86 and x64 stuff
-if (SOL2_PLATFORM MATCHES "i686" OR SOL2_PLATFORM STREQUAL "x86")
-	set(SOL2_IS_X86 TRUE)
-elseif (SOL2_PLATFORM MATCHES "ARM64")
-	set(IS_ARM64 TRUE)
-	set(IS_X64 TRUE)
-elseif (SOL2_PLATFORM MATCHES "ARM")
-	set(IS_ARM TRUE)
-elseif (SOL2_PLATFORM MATCHES "x86_64" OR SOL2_PLATFORM STREQUAL "x64")
-	set(IS_X64 TRUE)
-else()
-	set(IS_X64 TRUE)
-endif()
-
 if (SOL2_SYSTEM_INCLUDE)
-	set(--sol2-system-include SYSTEM)
+	set(sol2-system-include SYSTEM)
 endif()
 
 # # # sol2 Source Groups
@@ -112,7 +93,7 @@ set_target_properties(sol2
 	PROPERTIES
 	EXPORT_NAME sol2::sol2)
 
-target_include_directories(sol2 ${--sol2-system-include} INTERFACE
+target_include_directories(sol2 ${sol2-system-include} INTERFACE
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<INSTALL_INTERFACE:include>)
 
@@ -191,7 +172,7 @@ endif()
 # # # Tests, Examples and other CI suites that come with sol2
 if (SOL2_IS_TOP_LEVEL AND (SOL2_DO_TESTS OR SOL2_DO_EXAMPLES))
 	# # # General project output locations
-	if (SOL2_IS_X86 OR CMAKE_SIZEOF_VOID_P EQUAL 4)
+	if (CMAKE_SIZEOF_VOID_P EQUAL 4)
 		set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/lib")
 		set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/bin")
 		set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/bin")
@@ -204,26 +185,6 @@ if (SOL2_IS_TOP_LEVEL AND (SOL2_DO_TESTS OR SOL2_DO_EXAMPLES))
 	# # # Libraries
 	# Here, we pull in all the necessary libraries for building examples and tests
 	# Find threading library
-	if (NOT MSVC)
-		if (SOL2_IS_X86)
-			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
-			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
-			set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -m32")
-			set(CMAKE_EXECUTABLE_LINKER_FLAGS "${CMAKE_EXECUTABLE_LINKER_FLAGS} -m32")
-		endif()
-		set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-		set(THREADS_PREFER_PTHREAD_FLAG TRUE)
-	else()
-		string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-		string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-		if (BUILD_LUA_AS_DLL)
-			string(REGEX REPLACE "/MT" "/MD" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-			string(REGEX REPLACE "/MT" "/MD" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-		else ()
-			string(REGEX REPLACE "/MD" "/MT" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-			string(REGEX REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-		endif()
-	endif()
 	find_package(Threads REQUIRED)
 
 	string(TOLOWER ${SOL2_LUA_VERSION} NORMALIZED_LUA_VERSION)

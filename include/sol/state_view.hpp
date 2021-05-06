@@ -46,7 +46,7 @@ namespace sol {
 			bool is53mod = loaded && !(loaded->is<bool>() && !loaded->as<bool>());
 			if (is53mod)
 				return loaded;
-#if SOL_LUA_VESION_I_ <= 501
+#if SOL_LUA_VERSION_I_ <= 501
 			auto loaded51 = global.traverse_get<optional<object>>("package", "loaded", key);
 			bool is51mod = loaded51 && !(loaded51->is<bool>() && !loaded51->as<bool>());
 			if (is51mod)
@@ -57,7 +57,7 @@ namespace sol {
 
 		template <typename T>
 		void ensure_package(const std::string& key, T&& sr) {
-#if SOL_LUA_VESION_I_ <= 501
+#if SOL_LUA_VERSION_I_ <= 501
 			auto pkg = global["package"];
 			if (!pkg.valid()) {
 				pkg = create_table_with("loaded", create_table_with(key, sr));
@@ -129,7 +129,7 @@ namespace sol {
 
 				for (auto&& library : libraries) {
 					switch (library) {
-#if SOL_LUA_VESION_I_ <= 501 && SOL_IS_ON(SOL_USE_LUAJIT_I_)
+#if SOL_LUA_VERSION_I_ <= 501 && SOL_IS_ON(SOL_USE_LUAJIT_I_)
 					case lib::coroutine:
 #endif // luajit opens coroutine base stuff
 					case lib::base:
@@ -142,7 +142,7 @@ namespace sol {
 						break;
 #if SOL_IS_OFF(SOL_USE_LUAJIT_I_)
 					case lib::coroutine:
-#if SOL_LUA_VESION_I_ > 501
+#if SOL_LUA_VERSION_I_ > 501
 						luaL_requiref(L, "coroutine", luaopen_coroutine, 1);
 						lua_pop(L, 1);
 #endif // Lua 5.2+ only
@@ -183,7 +183,7 @@ namespace sol {
 						lua_pop(L, 1);
 						break;
 					case lib::utf8:
-#if SOL_LUA_VESION_I_ > 502 && SOL_IS_OFF(SOL_USE_LUAJIT_I_)
+#if SOL_LUA_VERSION_I_ > 502 && SOL_IS_OFF(SOL_USE_LUAJIT_I_)
 						luaL_requiref(L, "utf8", luaopen_utf8, 1);
 						lua_pop(L, 1);
 #endif // Lua 5.3+ only
@@ -236,7 +236,7 @@ namespace sol {
 			// one day Lua 5.1 will die a peaceful death
 			// and its old bones will find blissful rest
 			auto loaders_proxy = package
-#if SOL_LUA_VESION_I_ < 502
+#if SOL_LUA_VERSION_I_ < 502
 			     ["loaders"]
 #else
 			     ["searchers"]
@@ -264,7 +264,7 @@ namespace sol {
 			// one day Lua 5.1 will die a peaceful death
 			// and its old bones will find blissful rest
 			auto loaders_proxy = package
-#if SOL_LUA_VESION_I_ < 502
+#if SOL_LUA_VERSION_I_ < 502
 			     ["loaders"]
 #else
 			     ["searchers"]
@@ -647,7 +647,7 @@ namespace sol {
 		}
 
 		bool supports_gc_mode(gc_mode mode) const noexcept {
-#if SOL_LUA_VESION_I_ >= 504
+#if SOL_LUA_VERSION_I_ >= 504
 			// supports all modes
 			(void)mode;
 			return true;
@@ -656,7 +656,7 @@ namespace sol {
 		}
 
 		bool is_gc_on() const {
-#if SOL_LUA_VESION_I_ >= 502
+#if SOL_LUA_VERSION_I_ >= 502
 			return lua_gc(lua_state(), LUA_GCISRUNNING, 0) == 1;
 #else
 			// You cannot turn it off in Lua 5.1
@@ -676,7 +676,7 @@ namespace sol {
 			// THOUGHT: std::chrono-alikes to map "kilobyte size" here...?
 			// Make it harder to give MB or KB to a B parameter...?
 			// Probably overkill for now.
-#if SOL_LUA_VESION_I_ >= 504
+#if SOL_LUA_VERSION_I_ >= 504
 			// The manual implies that this function is almost always successful...
 			// is it?? It could depend on the GC mode...
 			return lua_gc(lua_state(), LUA_GCSTEP, step_size_kilobytes) != 0;
@@ -701,7 +701,7 @@ namespace sol {
 			// THOUGHT: std::chrono-alikes to map "byte size" here...?
 			// Make it harder to give MB or KB to a B parameter...?
 			// Probably overkill for now.
-#if SOL_LUA_VESION_I_ >= 504
+#if SOL_LUA_VERSION_I_ >= 504
 			int old_mode = lua_gc(lua_state(), LUA_GCINC, pause, step_multiplier, step_byte_size);
 			if (old_mode == LUA_GCGEN) {
 				return gc_mode::generational;
@@ -719,7 +719,7 @@ namespace sol {
 
 		// Returns the old GC mode. Check support using the supports_gc_mode function.
 		gc_mode change_gc_mode_generational(int minor_multiplier, int major_multiplier) {
-#if SOL_LUA_VESION_I_ >= 504
+#if SOL_LUA_VERSION_I_ >= 504
 			// "What does this shit mean?"
 			// http://www.lua.org/manual/5.4/manual.html#2.5.2
 			int old_mode = lua_gc(lua_state(), LUA_GCGEN, minor_multiplier, major_multiplier);

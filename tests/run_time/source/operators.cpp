@@ -282,7 +282,7 @@ TEST_CASE("operators/default with pointers", "test that default operations still
 	REQUIRE(ptr_test);
 	REQUIRE(unique_test);
 
-#if SOL_LUA_VERSION > 502
+#if SOL_LUA_VERSION_I_ > 502
 	lua.script("ptr_unique_test = t1 == t3");
 
 	bool ptr_unique_test = lua["ptr_unique_test"];
@@ -419,7 +419,7 @@ TEST_CASE("operators/member_stringable", "test member to_string stringability") 
 }
 
 TEST_CASE("operators/container-like", "test that generic begin/end and iterator are automatically bound") {
-#if SOL_LUA_VERSION > 501
+#if SOL_LUA_VERSION_I_ > 501
 	struct container {
 		typedef int* iterator;
 		typedef int value_type;

@@ -113,27 +113,69 @@ namespace sol {
 		}
 
 		template <typename T>
-		void set_on(const T& target) const {
+		bool set_on(const T& target) const {
 			lua_State* L = target.lua_state();
 			auto pp = stack::push_pop(target);
-#if SOL_LUA_VESION_I_ < 502
+			int target_index = pp.index_of(target);
+#if SOL_LUA_VERSION_I_ < 502
 			// Use lua_setfenv
 			this->push();
-			lua_setfenv(L, -2);
+			int success_result = lua_setfenv(L, target_index);
+			return success_result != 0;
 #else
-			// Use upvalues as explained in Lua 5.2 and beyond's manual
-			this->push();
-			const char* name = lua_setupvalue(L, -2, 1);
-			if (name == nullptr) {
-				this->pop();
+			// If this is a C function, the environment is always placed in
+			// the first value, as is expected of sol2 (all upvalues have an empty name, "")
+			if (lua_iscfunction(L, target_index) != 0) {
+				const char* maybe_upvalue_name = lua_getupvalue(L, target_index, 1);
+				if (maybe_upvalue_name == nullptr) {
+					return false;
+				}
+				string_view upvalue_name(maybe_upvalue_name);
+				if (upvalue_name == "") {
+					this->push();
+					const char* success = lua_setupvalue(L, target_index, 1);
+					if (success == nullptr) {
+						// left things alone on the stack, pop them off
+						lua_pop(L, 1);
+						return false;
+					}
+					return true;
+				}
+				return false;
+			}
+			else {
+				// Must search for the right upvalue target on index
+				for (int upvalue_index = 1;; ++upvalue_index) {
+					const char* maybe_upvalue_name = lua_getupvalue(L, target_index, upvalue_index);
+					if (maybe_upvalue_name == nullptr) {
+						break;
+					}
+					string_view upvalue_name(maybe_upvalue_name);
+					if (upvalue_name == "_ENV") {
+						this->push();
+						const char* success = lua_setupvalue(L, target_index, upvalue_index);
+						if (success == nullptr) {
+							// left things alone on the stack, pop them off
+							lua_pop(L, 1);
+							break;
+						}
+						// whether or not we succeeded, we found _ENV
+						// so we need to break
+						return true;
+					}
+					lua_pop(L, 1);
+				}
+				// if we get here,
+				// we did not find an _ENV here...
+				return false;
 			}
 #endif
 		}
 	};
 
 	template <typename T, typename E>
-	void set_environment(const basic_environment<E>& env, const T& target) {
-		env.set_on(target);
+	bool set_environment(const basic_environment<E>& env, const T& target) {
+		return env.set_on(target);
 	}
 
 	template <typename E = reference, typename T>

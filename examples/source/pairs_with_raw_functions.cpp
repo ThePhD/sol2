@@ -76,7 +76,7 @@ int main(int, char*[]) {
 	lua.new_usertype<my_thing>(
 	     "my_thing", sol::meta_function::pairs, &my_pairs);
 
-#if SOL_LUA_VERSION > 501
+#if SOL_LUA_VERSION_I_ > 501
 	lua.safe_script(R"(
 local mt = my_thing.new()
 for k, v in pairs(mt) do 

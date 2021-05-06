@@ -15,7 +15,8 @@ int main(int, char**) {
 
 	sol::environment env_f(lua, sol::create);
 	env_f["test"] = 31;
-	sol::set_environment(env_f, f);
+	bool env_f_set_success = sol::set_environment(env_f, f);
+	sol_c_assert(env_f_set_success);
 
 	// the function returns the value from the environment table
 	int result = f();
@@ -27,7 +28,9 @@ int main(int, char**) {
 	lua.script("g = function() test = 5 end");
 	sol::function g = lua["g"];
 	sol::environment env_g(lua, sol::create);
-	env_g.set_on(g); // same as set_environment
+	bool env_g_set_success
+	     = env_g.set_on(g); // same as set_environment
+	sol_c_assert(env_g_set_success);
 
 	g();
 	// the value can be retrieved from the env table

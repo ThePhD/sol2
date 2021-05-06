@@ -218,7 +218,7 @@ namespace sol {
 	} // namespace stack
 
 	inline lua_State* main_thread(lua_State* L_, lua_State* backup_if_unsupported_ = nullptr) {
-#if SOL_LUA_VESION_I_ < 502
+#if SOL_LUA_VERSION_I_ < 502
 		if (L_ == nullptr)
 			return backup_if_unsupported_;
 		lua_getglobal(L_, detail::default_main_thread_name());

@@ -71,7 +71,7 @@ namespace sol {
 		using unique_tag = detail::inheritance_unique_cast_function;
 
 		inline void* alloc_newuserdata(lua_State* L, std::size_t bytesize) {
-#if SOL_LUA_VERSION >= 504
+#if SOL_LUA_VERSION_I_ >= 504
 			return lua_newuserdatauv(L, bytesize, 1);
 #else
 			return lua_newuserdata(L, bytesize);

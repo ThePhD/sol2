@@ -88,7 +88,7 @@ TEST_CASE("plain/indestructible", "test that we error for types that are innatel
 		lua["i"] = *i;
 		lua.safe_script("i = nil");
 		auto result = lua.safe_script("collectgarbage() collectgarbage()", sol::script_pass_on_error);
-#if SOL_LUA_VERSION > 503
+#if SOL_LUA_VERSION_I_ > 503
 		REQUIRE(result.valid());
 #else
 		REQUIRE_FALSE(result.valid());

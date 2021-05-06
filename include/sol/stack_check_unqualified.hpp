@@ -113,7 +113,7 @@ namespace sol { namespace stack {
 			}
 			else if constexpr (std::is_integral_v<T> || std::is_same_v<T, lua_Integer>) {
 				tracking.use(1);
-#if SOL_LUA_VESION_I_ >= 503
+#if SOL_LUA_VERSION_I_ >= 503
 				// Lua 5.3 and greater checks for numeric precision
 #if SOL_IS_ON(SOL_STRINGS_ARE_NUMBERS_I_)
 				// imprecise, sloppy conversions

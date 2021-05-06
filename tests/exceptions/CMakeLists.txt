@@ -20,38 +20,21 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# # # # sol2 tests - header compilation tests
+# # # # sol2 tests - environment
 
-file(GLOB_RECURSE sources
+file(GLOB sources
 	LIST_DIRECTORIES FALSE
 	CONFIGURE_DEPENDS
 	source/*.cpp)
-set(sources-single
-	"source/main.cpp" "source/forward.cpp"
-	"source/sol.cpp" "source/config.cpp")
+source_group(test_sources FILES ${sources})
 
-set(target-variants
-	"SOL_ALL_SAFETIES_ON"
-	"SOL_USE_INTEROP"
-	"SOL_STRINGS_ARE_NUMBERS")
-
-function(CREATE_TEST test_target_name target_sol)
-	set(test_sources ${ARGN})
-	add_executable(${test_target_name} ${test_sources})
-	sol2_add_test_properties(${test_target_name})
-	target_link_libraries(${test_target_name}
-		PRIVATE ${target_sol})
-endfunction()
-
-foreach(variant ${target-variants})
-	set(target-name "sol2.tests.inclusion.${variant}")
-	set(single-target-name "sol2.single.tests.inclusion.${variant}")
-	
-	CREATE_TEST(${target-name} sol2::sol2 ${sources})
-	target_compile_definitions(${target-name} PRIVATE ${variant}=1)
-	
-	if (SOL2_TESTS_SINGLE)
-		CREATE_TEST(${single-target-name} sol2::sol2::single ${sources-single})
-		target_compile_definitions(${single-target-name} PRIVATE ${variant}=1)
-	endif()
-endforeach()
+sol2_create_basic_test(sol2.tests.exceptions sol2::sol2)
+target_compile_definitions(sol2.tests.exceptions PRIVATE
+	SOL_ALL_SAFETIES_ON=1)
+target_compile_options(sol2.tests.exceptions PRIVATE
+	${--allow-unreachable-code})
+sol2_create_basic_test(sol2.tests.exceptions.SOL_ALL_SAFETIES_ON sol2::sol2)
+target_compile_definitions(sol2.tests.exceptions.SOL_ALL_SAFETIES_ON PRIVATE
+	SOL_ALL_SAFETIES_ON=1)
+target_compile_options(sol2.tests.exceptions.SOL_ALL_SAFETIES_ON PRIVATE
+	${--allow-unreachable-code})

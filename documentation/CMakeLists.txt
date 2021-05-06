@@ -22,7 +22,7 @@
 
 # # # # sol2, documentation generation
 # # # Required minimum version statement
-cmake_minimum_required(VERSION 3.15.0)
+cmake_minimum_required(VERSION 3.16.0)
 	
 find_package(Doxygen REQUIRED)
 find_package(Python3 REQUIRED)
@@ -98,7 +98,6 @@ if (NOT SOL2_DOCUMENTATION_NO_SPHINX)
 endif()
 
 # For the install target
-include(GNUInstallDirs)
 install(DIRECTORY ${SOL2_SPHINX_BUILD_DIR}
 	DESTINATION ${CMAKE_INSTALL_DOCDIR}
 )

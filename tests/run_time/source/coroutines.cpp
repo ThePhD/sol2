@@ -65,7 +65,8 @@ inline namespace sol2_test_coroutines {
 			mThread = sol::thread::create(luaContext);
 			sol::state_view luaThreadState = mThread.state();
 			mThreadEnvironment = sol::environment(luaThreadState, sol::create, luaThreadState.globals());
-			sol::set_environment(mThreadEnvironment, mThread);
+			bool thread_environment_set_successfully = sol::set_environment(mThreadEnvironment, mThread);
+			REQUIRE(thread_environment_set_successfully);
 
 			sol::optional<sol::table> actionTable = luaThreadState["aTable"];
 			if (actionTable) {

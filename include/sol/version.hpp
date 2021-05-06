@@ -330,6 +330,20 @@
 	#endif
 #endif
 
+#if defined(SOL_ALL_INTEGER_VALUES_FIT)
+	#if (SOL_ALL_INTEGER_VALUES_FIT != 0)
+		#define SOL_ALL_INTEGER_VALUES_FIT_I_ SOL_ON
+	#else
+		#define SOL_ALL_INTEGER_VALUES_FIT_I_ SOL_OFF
+	#endif
+#elif !SOL_IS_DEFAULT_OFF(SOL_SAFE_NUMERICS_I_) && SOL_IS_OFF(SOL_SAFE_NUMERICS_I_)
+	// if numerics is intentionally turned off, flip this on
+	#define SOL_ALL_INTEGER_VALUES_FIT_I_ SOL_DEFAULT_ON
+#else
+	// default to off
+	#define SOL_ALL_INTEGER_VALUES_FIT_I_ SOL_DEFAULT_OFF
+#endif
+
 #if defined(SOL_SAFE_STACK_CHECK)
 	#if SOL_SAFE_STACK_CHECK != 0
 		#define SOL_SAFE_STACK_CHECK_I_ SOL_ON

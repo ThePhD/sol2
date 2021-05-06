@@ -257,7 +257,7 @@ void associative_ordered_container_key_value_check(sol::state& lua, T& data, T& 
 	typedef typename T::mapped_type V;
 	lua["collect"] = [&reflect](K k, V v) { reflect.insert({ k, v }); };
 
-#if SOL_LUA_VERSION > 502
+#if SOL_LUA_VERSION_I_ > 502
 	lua["val"] = data;
 	auto r = lua.safe_script(R"(
 for k, v in pairs(val) do

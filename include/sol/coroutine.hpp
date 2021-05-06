@@ -42,7 +42,7 @@ namespace sol {
 		call_status stats = call_status::yielded;
 
 		void luacall(std::ptrdiff_t argcount, std::ptrdiff_t) {
-#if SOL_LUA_VESION_I_ >= 504
+#if SOL_LUA_VERSION_I_ >= 504
 			int nresults;
 			stats = static_cast<call_status>(lua_resume(lua_state(), nullptr, static_cast<int>(argcount), &nresults));
 #else

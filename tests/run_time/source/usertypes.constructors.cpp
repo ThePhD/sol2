@@ -59,6 +59,85 @@ inline namespace sol2_test_usertypes_constructors {
 		constexpr constructor_cheat(int val_) noexcept : val(val_) {
 		}
 	};
+
+	namespace Helpers {
+		class vector2 {
+		public:
+			vector2() : x(0), y(0) {
+			}
+			vector2(float x, float y) : x(x), y(y) {
+			}
+			vector2(const vector2& _vector2) : x(_vector2.x), y(_vector2.y) {
+			}
+
+			float x, y;
+
+			vector2& operator+=(const vector2& _vector2);
+
+			vector2& operator-=(const vector2& _vector2);
+
+			vector2& operator*=(const float scalar);
+
+			vector2& operator*=(const vector2& _vector2);
+
+			/*std::shared_ptr<vector2> operator^=(const std::shared_ptr<vector2> _vector2)
+			{
+			     this->x *= _vector2->y;
+			     this->y *= _vector2->x;
+
+			     return std::make_shared<vector2>(*this);
+			}*/
+
+			friend float operator*(const vector2& _vector, const vector2& _vector2) {
+				return _vector.x * _vector2.x + _vector.y * _vector2.y;
+			}
+
+			friend float operator^(const vector2& _vector, const vector2& _vector2) {
+				return _vector.x * _vector2.y + _vector2.x * _vector.y;
+			}
+
+			vector2& operator=(const vector2& _vector2) noexcept;
+		};
+	} // namespace Helpers
+
+	namespace Helpers {
+		class vector3 {
+		public:
+			vector3() : x(0), y(0), z(0) {
+			}
+			vector3(float x, float y, float z) : x(x), y(y), z(z) {
+			}
+			vector3(const vector2& _vector2, float z) : x(_vector2.x), y(_vector2.y), z(z) {
+			}
+			float x, y, z;
+
+			float GetX() {
+				return x;
+			}
+
+			void SetX(float new_x) {
+				x = new_x;
+			}
+
+			vector3& operator+=(const vector3& _vector2);
+
+			vector3& operator-=(const vector3& _vector2);
+
+			vector3& operator*=(const float scalar);
+
+			vector3& operator*=(const vector3& _vector2);
+
+			friend float operator*(const vector3& _vector, const vector3& _vector2) {
+				return _vector.x * _vector2.x + _vector.y * _vector2.y + _vector.z * _vector2.z;
+			}
+
+			friend float operator^(const vector3& _vector, const vector3& _vector2) {
+				return _vector.x * _vector2.y + _vector2.x * _vector.y;
+			}
+
+			vector3& operator=(const vector3& _vector2) noexcept;
+		};
+	} // namespace Helpers
 } // namespace sol2_test_usertypes_constructors
 
 TEST_CASE("usertype/call_constructor", "make sure lua types can be constructed with function call constructors") {
@@ -227,4 +306,32 @@ TEST_CASE("usertype/no_constructor linking time", "make sure if no constructor i
 
 	sol::optional<sol::error> maybe_error = lua.safe_script("assert(heck.val == 1)", &sol::script_pass_on_error);
 	REQUIRE_FALSE(maybe_error.has_value());
+}
+
+TEST_CASE("usertypes/constructors_match", "Ensure that objects are properly constructed even in the case of multi-match, stack-cleaning constructors") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+	sol::table Lnamespace = lua["Helpers"].get_or_create<sol::table>();
+
+	Lnamespace.new_usertype<Helpers::vector2>("vector2",
+	     sol::constructors<Helpers::vector2(), Helpers::vector3(float, float), Helpers::vector2(const Helpers::vector2&)>(),
+	     "x",
+	     &Helpers::vector2::x,
+	     "y",
+	     &Helpers::vector2::y);
+
+	Lnamespace.new_usertype<Helpers::vector3>("vector3",
+	     sol::constructors<Helpers::vector3(), Helpers::vector3(float, float, float), Helpers::vector3(Helpers::vector2&, float)>(),
+	     "x",
+	     &Helpers::vector3::x,
+	     "y",
+	     &Helpers::vector3::y,
+	     "z",
+	     &Helpers::vector3::z);
+
+	auto result = lua.safe_script(R"(local obj = Helpers.vector3.new(5,7,2)
+		assert(obj.x == 5)
+	)",
+	     sol::script_pass_on_error);
+	REQUIRE(result.valid());
 }

@@ -24,13 +24,65 @@
 
 # # Dependencies
 FetchContent_Declare(
-	Catch2
+	catch2
 	GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-	GIT_TAG        v2.13.4
+	GIT_TAG v2.13.6
 )
-FetchContent_MakeAvailable(Catch2)
+FetchContent_MakeAvailable(catch2)
+
+function(sol2_add_test_properties target-name)
+	target_link_libraries(${target-name}
+		PUBLIC Threads::Threads ${LUA_LIBRARIES} Catch2::Catch2 ${CMAKE_DL_LIBS})
+	target_compile_definitions(${target-name}
+		PUBLIC SOL_PRINT_ERRORS=1)
+	target_compile_options(${target-name}
+		PRIVATE
+		${--template-debugging-mode}
+		${--big-obj}
+		${--no-unknown-warning}
+		${--disable-permissive}
+		${--pedantic}
+		${--warn-all}
+		${--warn-pedantic}
+		${--warn-extra}
+		${--warn-errors}
+		${--utf8-literal-encoding}
+		${--utf8-source-encoding}
+
+		${--allow-unknown-warning}
+		${--allow-unknown-warning-option}
+		${--allow-noexcept-type}
+		${--allow-microsoft-casts}
+	)
+
+	target_compile_definitions(${target-name}
+		PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+
+	if (SOL2_CI)
+		target_compile_definitions(${target-name}
+			PRIVATE SOL2_CI)
+	endif()
+	
+	add_test(NAME ${target-name} COMMAND ${target-name})
+	if(SOL2_ENABLE_INSTALL)
+		install(TARGETS ${target-name} RUNTIME DESTINATION bin)
+	endif()
+endfunction()
+
+function(sol2_create_basic_test test_target_name target_sol)
+	set(test_target_name ${test_target_name})
+	add_executable(${test_target_name} ${sources})
+	sol2_add_test_properties(${test_target_name})
+	target_link_libraries(${test_target_name}
+		PRIVATE ${target_sol})
+	target_compile_definitions(${test_target_name}
+		PRIVATE SOL_ALL_SAFETIES_ON=1)
+endfunction()
 
 add_subdirectory(inclusion)
-add_subdirectory(runtime_tests)
+add_subdirectory(environment)
+add_subdirectory(numerics)
+add_subdirectory(exceptions)
 add_subdirectory(config_tests)
 add_subdirectory(regression_tests)
+add_subdirectory(run_time)

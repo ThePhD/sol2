@@ -45,7 +45,20 @@ namespace sol { namespace stack {
 	namespace stack_detail {
 		template <typename T>
 		inline bool integer_value_fits(const T& value) {
-			if constexpr (sizeof(T) < sizeof(lua_Integer) || (std::is_signed_v<T> && sizeof(T) == sizeof(lua_Integer))) {
+			// We check if we can rely on casts or a lack of padding bits to satisfy
+			// the requirements here
+			// If it lacks padding bits, we can jump back and forth between lua_Integer and whatever type without
+			// loss of information
+			constexpr bool is_same_signedness
+				= (std::is_signed_v<T> && std::is_signed_v<lua_Integer>) || (std::is_unsigned_v<T> && std::is_unsigned_v<lua_Integer>);
+			constexpr bool probaby_fits_within_lua_Integer = sizeof(T) == sizeof(lua_Integer)
+#if SOL_IS_ON(SOL_ALL_INTEGER_VALUES_FIT_I_)
+				&& ((std::has_unique_object_representations_v<T> && std::has_unique_object_representations_v<lua_Integer>) ? true : is_same_signedness)
+#else
+				&& is_same_signedness
+#endif
+				;
+			if constexpr (sizeof(T) < sizeof(lua_Integer) || probaby_fits_within_lua_Integer) {
 				(void)value;
 				return true;
 			}
@@ -87,18 +100,38 @@ namespace sol { namespace stack {
 		}
 	} // namespace stack_detail
 
-	inline int push_environment_of(lua_State* L, int index = -1) {
+	inline int push_environment_of(lua_State* L, int target_index = -1) {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 		luaL_checkstack(L, 1, detail::not_enough_stack_space_environment);
 #endif // make sure stack doesn't overflow
-#if SOL_LUA_VESION_I_ < 502
+#if SOL_LUA_VERSION_I_ < 502
 		// Use lua_getfenv
-		lua_getfenv(L, index);
+		lua_getfenv(L, target_index);
 #else
-		// Use upvalues as explained in Lua 5.2 and beyond's manual
-		if (lua_getupvalue(L, index, 1) == nullptr) {
-			push(L, lua_nil);
-			return 1;
+
+		if (lua_iscfunction(L, target_index) != 0) {
+			const char* maybe_upvalue_name = lua_getupvalue(L, target_index, 1);
+			if (maybe_upvalue_name != nullptr) {
+				// it worked, take this one
+				return 1;
+			}
+		}
+		// Nominally, we search for the `"_ENV"` value.
+		// If we don't find it.... uh, well. We've got a problem?
+		for (int upvalue_index = 1;; ++upvalue_index) {
+			const char* maybe_upvalue_name = lua_getupvalue(L, target_index, upvalue_index);
+			if (maybe_upvalue_name == nullptr) {
+				push(L, lua_nil);
+				break;
+			}
+
+			string_view upvalue_name(maybe_upvalue_name);
+			if (upvalue_name == "_ENV") {
+				// Keep this one!
+				break;
+			}
+			// Discard what we received, loop back around
+			lua_pop(L, 1);
 		}
 #endif
 		return 1;
@@ -106,8 +139,9 @@ namespace sol { namespace stack {
 
 	template <typename T>
 	int push_environment_of(const T& target) {
-		target.push();
-		return push_environment_of(target.lua_state(), -1) + 1;
+		lua_State* target_L = target.lua_state();
+		int target_index = absolute_index(target_L, -target.push());
+		return push_environment_of(target_L, target_index);
 	}
 
 	template <typename T>
@@ -272,7 +306,7 @@ namespace sol { namespace stack {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 				luaL_checkstack(L, 1, detail::not_enough_stack_space_integral);
 #endif // make sure stack doesn't overflow
-#if SOL_LUA_VESION_I_ >= 503
+#if SOL_LUA_VERSION_I_ >= 503
 				if (stack_detail::integer_value_fits<Tu>(value)) {
 					lua_pushinteger(L, static_cast<lua_Integer>(value));
 					return 1;
@@ -383,7 +417,7 @@ namespace sol { namespace stack {
 			int tableindex = lua_gettop(L);
 			std::size_t index = 1;
 			for (const auto& i : cont) {
-#if SOL_LUA_VESION_I_ >= 503
+#if SOL_LUA_VERSION_I_ >= 503
 				int p = is_nested ? stack::push(L, as_nested_ref(i)) : stack::push(L, i);
 				for (int pi = 0; pi < p; ++pi) {
 					lua_seti(L, tableindex, static_cast<lua_Integer>(index++));

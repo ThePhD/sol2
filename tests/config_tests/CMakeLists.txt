@@ -23,3 +23,4 @@
 # # # # sol2 tests
 
 add_subdirectory(function_pointers)
+add_subdirectory(integer_value_fits)

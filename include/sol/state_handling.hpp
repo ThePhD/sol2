@@ -37,7 +37,7 @@
 
 namespace sol {
 	inline void register_main_thread(lua_State* L) {
-#if SOL_LUA_VESION_I_ < 502
+#if SOL_LUA_VERSION_I_ < 502
 		if (L == nullptr) {
 			lua_pushnil(L);
 			lua_setglobal(L, detail::default_main_thread_name());

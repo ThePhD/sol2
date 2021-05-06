@@ -72,8 +72,8 @@ namespace sol {
 
 		template <bool is_yielding, bool no_trampoline, typename Fx, typename... Args>
 		void select_set_fx(lua_State* L, Args&&... args) {
-			lua_CFunction freefunc = no_trampoline ? detail::static_trampoline<function_detail::call<meta::unqualified_t<Fx>, 2, is_yielding>>
-			                                       : function_detail::call<meta::unqualified_t<Fx>, 2, is_yielding>;
+			lua_CFunction freefunc = no_trampoline ? function_detail::call<meta::unqualified_t<Fx>, 2, is_yielding>
+			                                       : detail::static_trampoline<function_detail::call<meta::unqualified_t<Fx>, 2, is_yielding>>;
 
 			int upvalues = 0;
 			upvalues += stack::push(L, nullptr);
@@ -277,7 +277,7 @@ namespace sol {
 		template <typename... Sigs>
 		struct unqualified_pusher<function_sig<Sigs...>> {
 			template <bool is_yielding, typename Arg0, typename... Args>
-			static int push(lua_State* L, Arg0&& arg0, Args&&... args) {
+			static int push_yielding(lua_State* L, Arg0&& arg0, Args&&... args) {
 				if constexpr (meta::is_specialization_of_v<meta::unqualified_t<Arg0>, std::function>) {
 					if constexpr (is_yielding) {
 						return stack::push<meta::unqualified_t<Arg0>>(L, detail::yield_tag, std::forward<Arg0>(arg0), std::forward<Args>(args)...);
@@ -295,13 +295,13 @@ namespace sol {
 			template <typename Arg0, typename... Args>
 			static int push(lua_State* L, Arg0&& arg0, Args&&... args) {
 				if constexpr (std::is_same_v<meta::unqualified_t<Arg0>, detail::yield_tag_t>) {
-					push<true>(L, std::forward<Args>(args)...);
+					push_yielding<true>(L, std::forward<Args>(args)...);
 				}
 				else if constexpr (meta::is_specialization_of_v<meta::unqualified_t<Arg0>, yielding_t>) {
-					push<true>(L, std::forward<Arg0>(arg0).func, std::forward<Args>(args)...);
+					push_yielding<true>(L, std::forward<Arg0>(arg0).func, std::forward<Args>(args)...);
 				}
 				else {
-					push<false>(L, std::forward<Arg0>(arg0), std::forward<Args>(args)...);
+					push_yielding<false>(L, std::forward<Arg0>(arg0), std::forward<Args>(args)...);
 				}
 				return 1;
 			}
@@ -315,7 +315,7 @@ namespace sol {
 					return stack::push<T>(L, detail::yield_tag, f.func, std::forward<Args>(args)...);
 				}
 				else {
-					function_detail::select<true, true>(L, f.func, std::forward<Args>(args)...);
+					function_detail::select<true, false>(L, f.func, std::forward<Args>(args)...);
 					return 1;
 				}
 			}
@@ -326,7 +326,7 @@ namespace sol {
 					return stack::push<T>(L, detail::yield_tag, std::move(f.func), std::forward<Args>(args)...);
 				}
 				else {
-					function_detail::select<true, true>(L, std::move(f.func), std::forward<Args>(args)...);
+					function_detail::select<true, false>(L, std::move(f.func), std::forward<Args>(args)...);
 					return 1;
 				}
 			}
@@ -350,9 +350,11 @@ namespace sol {
 
 		template <typename Signature>
 		struct unqualified_pusher<std::function<Signature>> {
+			using TargetFunctor = function_detail::functor_function<std::function<Signature>, false, true>;
+
 			static int push(lua_State* L, detail::yield_tag_t, const std::function<Signature>& fx) {
 				if (fx) {
-					function_detail::select<true, true>(L, fx);
+					function_detail::select_set_fx<true, false, TargetFunctor>(L, fx);
 					return 1;
 				}
 				return stack::push(L, lua_nil);
@@ -360,7 +362,7 @@ namespace sol {
 
 			static int push(lua_State* L, detail::yield_tag_t, std::function<Signature>&& fx) {
 				if (fx) {
-					function_detail::select<true, true>(L, std::move(fx));
+					function_detail::select_set_fx<true, false, TargetFunctor>(L, std::move(fx));
 					return 1;
 				}
 				return stack::push(L, lua_nil);
@@ -368,7 +370,7 @@ namespace sol {
 
 			static int push(lua_State* L, const std::function<Signature>& fx) {
 				if (fx) {
-					function_detail::select<false, true>(L, fx);
+					function_detail::select_set_fx<false, false, TargetFunctor>(L, fx);
 					return 1;
 				}
 				return stack::push(L, lua_nil);
@@ -376,7 +378,7 @@ namespace sol {
 
 			static int push(lua_State* L, std::function<Signature>&& fx) {
 				if (fx) {
-					function_detail::select<false, true>(L, std::move(fx));
+					function_detail::select_set_fx<false, false, TargetFunctor>(L, std::move(fx));
 					return 1;
 				}
 				return stack::push(L, lua_nil);
@@ -387,7 +389,7 @@ namespace sol {
 		struct unqualified_pusher<Signature, std::enable_if_t<meta::is_member_object_or_function_v<Signature>>> {
 			template <typename... Args>
 			static int push(lua_State* L, Args&&... args) {
-				function_detail::select<false, true>(L, std::forward<Args>(args)...);
+				function_detail::select<false, false>(L, std::forward<Args>(args)...);
 				return 1;
 			}
 		};
@@ -527,7 +529,8 @@ namespace sol {
 			}
 
 			static int push(lua_State* L, no_construction c, function_detail::call_indicator) {
-				return push(L, c);
+				lua_CFunction cf = &function_detail::no_construction_error;
+				return stack::push(L, cf);
 			}
 		};
 

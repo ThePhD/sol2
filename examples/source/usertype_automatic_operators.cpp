@@ -106,7 +106,7 @@ print("#obj2:", #obj2)
 print("#obj3:", #obj3)
 
 	)");
-#if SOL_LUA_VERSION > 501
+#if SOL_LUA_VERSION_I_ > 501
 	lua.script(R"(
 for k, v in pairs(obj1) do
 	assert( (k / 3) == v )

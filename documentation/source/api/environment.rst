@@ -10,7 +10,7 @@ environment
 	class environment : public table;
 
 	template <typename T>
-	void set_environment( const environment& env, const T& target );
+	bool set_environment( const environment& env, const T& target );
 	template <typename E = reference, typename T>
 	basic_environment<E> get_environment( const T& target );
 

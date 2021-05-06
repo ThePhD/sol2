@@ -255,7 +255,7 @@ TEST_CASE("containers/input iterators", "test shitty input iterators that are al
 
 	not_really_a_container c;
 	lua["c"] = &c;
-#if SOL_LUA_VERSION > 502
+#if SOL_LUA_VERSION_I_ > 502
 	auto result0 = lua.safe_script(R"lua(
 for k, v in pairs(c) do
   assert((k - 1) == v:val())
