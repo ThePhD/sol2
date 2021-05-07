@@ -100,7 +100,7 @@ TEST_CASE("exceptions/functions", "exercise the ability to throw exceptions many
 		lua["func_throw"] = [] { return func_throw(); };
 		REQUIRE_NOTHROW(throw_action(lua, false));
 
-		lua["func_throw"] = [a]() { return func_throw(); };
+		lua["func_throw"] = [a]() { (void)a; return func_throw(); };
 		REQUIRE_NOTHROW(throw_action(lua, false));
 
 		lua["func_throw"] = [&sc]() { return sc.mem_func_throw(); };
@@ -149,7 +149,7 @@ TEST_CASE("exceptions/functions", "exercise the ability to throw exceptions many
 		lua.set_function("func_throw", [] { return func_throw(); });
 		REQUIRE_NOTHROW(throw_action(lua, false));
 
-		lua.set_function("func_throw", [a]() { return func_throw(); });
+		lua.set_function("func_throw", [a]() { (void)a; return func_throw(); });
 		REQUIRE_NOTHROW(throw_action(lua, false));
 
 		// TODO: this should work at some point, yeah?

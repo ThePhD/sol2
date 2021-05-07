@@ -528,7 +528,7 @@ namespace sol {
 				return stack::push(L, cf);
 			}
 
-			static int push(lua_State* L, no_construction c, function_detail::call_indicator) {
+			static int push(lua_State* L, no_construction, function_detail::call_indicator) {
 				lua_CFunction cf = &function_detail::no_construction_error;
 				return stack::push(L, cf);
 			}
