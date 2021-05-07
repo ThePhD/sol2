@@ -26,11 +26,15 @@ file(GLOB sources
 	LIST_DIRECTORIES FALSE
 	CONFIGURE_DEPENDS
 	source/*.cpp)
-source_group(test_sources FILES ${sources})
 
-sol2_create_basic_test(sol2.tests.config.integer_value_fits sol2::sol2)
-sol2_create_basic_test(sol2.tests.config.integer_value_fits.SOL_ALL_SAFETIES_ON sol2::sol2)
+sol2_create_basic_test(sol2.tests.config.integer_value_fits sol2::sol2 ${sources})
+sol2_create_basic_test(sol2.tests.config.integer_value_fits.SOL_ALL_SAFETIES_ON sol2::sol2 ${sources})
 target_compile_definitions(sol2.tests.config.integer_value_fits PRIVATE
 	SOL_ALL_INTEGER_VALUES_FIT=1)
 target_compile_definitions(sol2.tests.config.integer_value_fits.SOL_ALL_SAFETIES_ON PRIVATE
 	SOL_ALL_INTEGER_VALUES_FIT=1 SOL_ALL_SAFETIES_ON=1)
+if (SOL2_TESTS_SINGLE)
+	sol2_create_basic_test(sol2.single.tests.config.integer_value_fits sol2::sol2 ${sources})
+	target_compile_definitions(sol2.single.tests.config.integer_value_fits PRIVATE
+		SOL_ALL_INTEGER_VALUES_FIT=1)
+endif()

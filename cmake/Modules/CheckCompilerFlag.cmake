@@ -73,8 +73,8 @@ function (check_compiler_flag flag_name)
 	string(CONCAT compiler_flag
 		$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:${flag_MSVC}>
 		$<$<COMPILE_LANG_AND_ID:C,MSVC>:${flag_MSVC}>
-		$<$<COMPILE_LANG_AND_ID:CXX,GCC>:${flag_GCC}>
-		$<$<COMPILE_LANG_AND_ID:C,GCC>:${flag_GCC}>
+		$<$<COMPILE_LANG_AND_ID:CXX,GNU>:${flag_GCC}>
+		$<$<COMPILE_LANG_AND_ID:C,GNU>:${flag_GCC}>
 		$<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang>:${flag_CLANG}>
 		$<$<COMPILE_LANG_AND_ID:C,Clang,AppleClang>:${flag_CLANG}>
 	)

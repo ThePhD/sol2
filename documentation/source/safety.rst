@@ -94,7 +94,7 @@ Feature Config
 	* Includes ``<iostream>`` and prints all exceptions and errors to ``std::cerr``, for you to see
 	* **Not** turned on by default under any settings: *this MUST be turned on manually*
 
-``SOL_GET_FUNCTION_POINTERS_UNSAFE`` triggers the following change:
+``SOL_GET_FUNCTION_POINTER_UNSAFE`` triggers the following change:
 	* Allows function pointers serialized into Lua as a callable to be retrieved back from Lua in a semi-proper manner
 	* **This is under NO circumstances type safe**
 		- It **WILL** break ``sol::overload`` type checking and will not discriminate properly between function types

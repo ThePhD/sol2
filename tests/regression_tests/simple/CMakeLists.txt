@@ -22,48 +22,12 @@
 
 # # # # sol2 tests - simple regression tests
 
-file(GLOB_RECURSE simple_test_sources
+file(GLOB_RECURSE sources
 	LIST_DIRECTORIES FALSE
 	CONFIGURE_DEPENDS
 	source/*.cpp)
 
-source_group(test_sources FILES ${simple_test_sources})
-
-function(CREATE_TEST test_target_name test_name target_sol)
-	add_executable(${test_target_name} ${simple_test_sources})
-	set_target_properties(${test_target_name}
-		PROPERTIES
-		OUTPUT_NAME ${test_name})
-	target_link_libraries(${test_target_name} 
-		PUBLIC Threads::Threads ${LUA_LIBRARIES} ${target_sol} Catch2::Catch2 ${CMAKE_DL_LIBS})
-	target_compile_definitions(${test_target_name}
-			PRIVATE SOL_ALL_SAFETIES_ON)
-	if (MSVC)
-		target_compile_options(${test_target_name}
-			PRIVATE /EHsc /std:c++latest /W4)
-		target_compile_definitions(${test_target_name}
-			PRIVATE UNICODE _UNICODE 
-			_CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
-	else()
-		target_compile_options(${test_target_name}
-			PRIVATE -std=c++1z -Wno-unknown-warning -Wno-unknown-warning-option 
-			-Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
-	endif()
-
-	if (SOL2_CI)
-		target_compile_definitions(${test_target_name} 
-			PRIVATE SOL2_CI)
-	endif()
-	
-	add_test(NAME ${test_name} COMMAND ${test_target_name})
-	if(SOL2_ENABLE_INSTALL)
-		install(TARGETS ${test_target_name} RUNTIME DESTINATION bin)
-	endif()
-endfunction(CREATE_TEST)
-
-if (SOL2_TESTS)
-	CREATE_TEST(regression_tests "regression_tests" sol2::sol2)
-endif()
+sol2_create_basic_test(sol2.tests.regression sol2::sol2 ${sources})
 if (SOL2_TESTS_SINGLE)
-	CREATE_TEST(regression_tests_single "regression_tests.single" sol2::sol2::single)
+	sol2_create_basic_test(sol2.single.tests.regression sol2::sol2::single ${sources})
 endif()

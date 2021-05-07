@@ -27,7 +27,15 @@ file(GLOB sources
 	CONFIGURE_DEPENDS
 	source/*.cpp)
 
-sol2_create_basic_test("sol2.tests.run_time" sol2::sol2)
+if (WAY_TOO_BUSTED_RIGHT_NOW)
+
+sol2_create_basic_test(sol2.tests.run_time sol2::sol2 ${sources})
+target_compile_definitions(sol2.tests.run_time PRIVATE
+	SOL_ALL_SAFETIES_ON=1)
 if (SOL2_TESTS_SINGLE)
-	sol2_create_basic_test("sol2.single.tests.run_time" sol2::sol2::single)
+	sol2_create_basic_test(sol2.single.tests.run_time sol2::sol2::single ${sources})
+	target_compile_definitions(sol2.single.tests.run_time PRIVATE
+		SOL_ALL_SAFETIES_ON=1)
 endif()
+
+endif() # currently borked

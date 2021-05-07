@@ -26,8 +26,7 @@ file(GLOB sources
 	LIST_DIRECTORIES FALSE
 	CONFIGURE_DEPENDS
 	source/*.cpp)
-source_group(test_sources FILES ${sources})
 
-sol2_create_basic_test(sol2.tests.environment sol2::sol2)
+sol2_create_basic_test(sol2.tests.environment sol2::sol2 ${sources})
 target_compile_definitions(sol2.tests.environment PRIVATE
 	SOL_ALL_SAFETIES_ON=1)

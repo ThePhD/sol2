@@ -31,7 +31,6 @@ function(sol2_add_example_properties target-name)
 		PRIVATE
 		${--template-debugging-mode}
 		${--big-obj}
-		${--no-unknown-warning}
 		${--disable-permissive}
 		${--pedantic}
 		${--warn-all}
@@ -44,7 +43,7 @@ function(sol2_add_example_properties target-name)
 		${--allow-unknown-warning}
 		${--allow-unknown-warning-option}
 		${--allow-noexcept-type}
-		${--allow-microsoft-casts}
+		${--allow-microsoft-cast}
 	)
 
 	target_compile_definitions(${target-name}
@@ -83,7 +82,6 @@ add_subdirectory(customization)
 # # single-source compilable examples
 
 file(GLOB sol2.examples.sources source/*.cpp source/tutorials/*.cpp source/tutorials/quick_n_dirty/*.cpp source/docs/*.cpp)
-source_group(examples FILES ${sol2.examples.sources})
 
 function (MAKE_EXAMPLE example_source_file example_prefix target_sol)
 	get_filename_component(example_name ${example_source_file} NAME_WE)

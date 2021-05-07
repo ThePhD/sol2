@@ -28,7 +28,7 @@ find_package(PythonInterp 3 REQUIRED)
 
 # to generate, need all of the existing header files
 file(GLOB sol2_generated_header_sources ${CMAKE_CURRENT_SOURCE_DIR}/../include/**/*.*)
-source_group(sol2_single FILES ${SOL2_SINGLE_HEADER_SOURCES})
+
 # generate the single header if we can find the python3 interpreter
 add_custom_command(
 	COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/include/sol"

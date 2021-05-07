@@ -20,81 +20,21 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# # # # sol2 tests - simple regression tests
+# # # # sol2 tests - special configurations - unsafe function pointers
 
-file(GLOB test_sources
+file(GLOB sources
 	LIST_DIRECTORIES FALSE
 	CONFIGURE_DEPENDS
 	source/*.cpp)
-source_group(sources FILES ${test_sources})
 
-function(CREATE_TEST test_target_name test_name target_sol)
-	add_executable(${test_target_name} ${test_sources})
-	set_target_properties(${test_target_name}
-		PROPERTIES
-		OUTPUT_NAME ${test_name}
-		EXPORT_NAME sol2::${test_name})
-	target_link_libraries(${test_target_name} 
-		PUBLIC Threads::Threads ${LUA_LIBRARIES} ${target_sol} ${CMAKE_DL_LIBS})
-	target_compile_definitions(${test_target_name}
-		PRIVATE SOL_GET_FUNCTION_POINTER_UNSAFE=1 SOL_ALL_SAFETIES_ON=1)
-	target_include_directories(${test_target_name}
-		PRIVATE ../../../examples/include)
-
-	if (MSVC)
-		if (NOT CMAKE_COMPILER_ID MATCHES "Clang")
-			target_compile_options(${test_target_name} 
-				PRIVATE /bigobj /W4)
-		endif()
-	else()
-		target_compile_options(${test_target_name} 
-			PRIVATE -std=c++1z -pthread
-			-Wno-unknown-warning -Wno-unknown-warning-option
-			-Wall -Wpedantic -Werror -pedantic -pedantic-errors
-			-Wno-noexcept-type)
-
-		if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-			# For another day, when C++ is not so crap
-			# and we have time to audit the entire lib
-			# for all uses of `detail::swallow`...
-			#target_compile_options(${test_target_name}
-			#	PRIVATE -Wcomma)		
-		endif()
-
-		if (IS_X86)
-			if(MINGW)
-				set_target_properties(${test_target_name}
-					PROPERTIES
-					LINK_FLAGS -static-libstdc++)
-			endif()
-		endif()	
-	endif()
-	if (MSVC)
-		target_compile_options(${test_target_name}
-			PRIVATE /EHsc /std:c++latest)
-		target_compile_definitions(${test_target_name}
-			PRIVATE UNICODE _UNICODE 
-			_CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
-	else()
-		target_compile_options(${test_target_name}
-			PRIVATE -std=c++1z -Wno-unknown-warning -Wno-unknown-warning-option 
-			-Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
-	endif()
-
-	if (SOL2_CI)
-		target_compile_definitions(${test_target_name} 
-			PRIVATE SOL2_CI)
-	endif()
-	
-	add_test(NAME ${test_name} COMMAND ${test_target_name})
-	if(SOL2_ENABLE_INSTALL)
-		install(TARGETS ${test_target_name} RUNTIME DESTINATION bin)
-	endif()
-endfunction(CREATE_TEST)
-
-if (SOL2_TESTS)
-	CREATE_TEST(config_function_pointers_tests "config_function_pointers_tests" sol2::sol2)
-endif()
+sol2_create_basic_test(sol2.tests.config_function_pointers sol2::sol2 ${sources})
+sol2_create_basic_test(sol2.tests.config_function_pointers.SOL_ALL_SAFETIES_ON sol2::sol2 ${sources})
+target_compile_definitions(sol2.tests.config_function_pointers PRIVATE
+	SOL_GET_FUNCTION_POINTER_UNSAFE=1)
+target_compile_definitions(sol2.tests.config_function_pointers.SOL_ALL_SAFETIES_ON PRIVATE
+	SOL_ALL_SAFETIES_ON=1 SOL_GET_FUNCTION_POINTER_UNSAFE=1)
 if (SOL2_TESTS_SINGLE)
-	CREATE_TEST(config_function_pointers_tests_single "config_function_pointers_tests.single" sol2::sol2::single)
+	sol2_create_basic_test(sol2.single.tests.config_function_pointers sol2::sol2::single ${sources})
+	target_compile_definitions(sol2.single.tests.config_function_pointers PRIVATE
+		SOL_GET_FUNCTION_POINTER_UNSAFE=1)
 endif()

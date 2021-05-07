@@ -82,7 +82,6 @@ endif()
 # # Sources everyone is going to need
 # Header files
 file(GLOB SOL2_HEADER_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/include/sol*.hpp)
-source_group(sol2 FILES ${SOL2_HEADER_SOURCES})
 
 # # # sol2 Library
 # # Add a target for sol2's library to be included by external users

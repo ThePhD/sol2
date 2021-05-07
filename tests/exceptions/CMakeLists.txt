@@ -26,14 +26,13 @@ file(GLOB sources
 	LIST_DIRECTORIES FALSE
 	CONFIGURE_DEPENDS
 	source/*.cpp)
-source_group(test_sources FILES ${sources})
 
-sol2_create_basic_test(sol2.tests.exceptions sol2::sol2)
+sol2_create_basic_test(sol2.tests.exceptions sol2::sol2 ${sources})
 target_compile_definitions(sol2.tests.exceptions PRIVATE
 	SOL_ALL_SAFETIES_ON=1)
 target_compile_options(sol2.tests.exceptions PRIVATE
 	${--allow-unreachable-code})
-sol2_create_basic_test(sol2.tests.exceptions.SOL_ALL_SAFETIES_ON sol2::sol2)
+sol2_create_basic_test(sol2.tests.exceptions.SOL_ALL_SAFETIES_ON sol2::sol2 ${sources})
 target_compile_definitions(sol2.tests.exceptions.SOL_ALL_SAFETIES_ON PRIVATE
 	SOL_ALL_SAFETIES_ON=1)
 target_compile_options(sol2.tests.exceptions.SOL_ALL_SAFETIES_ON PRIVATE

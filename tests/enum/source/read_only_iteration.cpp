@@ -21,10 +21,30 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define CATCH_CONFIG_RUNNER
 #include <catch2/catch.hpp>
 
-int main(int argc, char* argv[]) {
-	int result = Catch::Session().run(argc, argv);
-	return result;
+#include <sol/sol.hpp>
+
+inline namespace sol2_tests_enum_read_only_iteration {
+	enum class color { red, blue };
+}
+
+
+TEST_CASE("environments/sanboxing", "see if environments on functions are working properly") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+	constexpr bool ro = true;
+	lua.new_enum<color, ro>("color", { { "red", color::red }, { "blue", color::blue } });
+	auto script = R"lua(
+		print( "start" )
+		for k, v in pairs( color ) do
+			print( tostring(k) .. ": " .. tostring(v) )
+		end
+		print( "end" )
+	)lua";
+	auto result = lua.safe_script(script, sol::script_pass_on_error);
+	sol::optional<sol::error> maybe_error = result;
+	REQUIRE(result.valid());
+	REQUIRE(result.status() == sol::call_status::ok);
+	REQUIRE_FALSE(maybe_error.has_value());
 }

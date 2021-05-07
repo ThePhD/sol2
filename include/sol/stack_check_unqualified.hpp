@@ -509,6 +509,12 @@ namespace sol { namespace stack {
 				}
 #endif // interop extensibility
 				tracking.use(1);
+#if SOL_IS_ON(SOL_GET_FUNCTION_POINTER_UNSAFE_I_)
+				if (lua_iscfunction(L, index) != 0) {
+					// a potential match...
+					return true;
+				}
+#endif
 				if (indextype != type::userdata) {
 					handler(L, index, type::userdata, indextype, "value is not a valid userdata");
 					return false;

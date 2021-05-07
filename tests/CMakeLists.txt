@@ -52,7 +52,7 @@ function(sol2_add_test_properties target-name)
 		${--allow-unknown-warning}
 		${--allow-unknown-warning-option}
 		${--allow-noexcept-type}
-		${--allow-microsoft-casts}
+		${--allow-microsoft-cast}
 	)
 
 	target_compile_definitions(${target-name}
@@ -71,6 +71,7 @@ endfunction()
 
 function(sol2_create_basic_test test_target_name target_sol)
 	set(test_target_name ${test_target_name})
+	set(sources ${ARGN})
 	add_executable(${test_target_name} ${sources})
 	sol2_add_test_properties(${test_target_name})
 	target_link_libraries(${test_target_name}

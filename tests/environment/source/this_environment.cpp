@@ -69,7 +69,7 @@ TEST_CASE("environment/this_environment/nested_calls", "Test that this_environme
 
 	lua.set_function("print_no_env", [](int x) { REQUIRE(x == 1); });
 
-	lua.set_function("print_this_env", [](int x, sol::this_environment env) { REQUIRE(x == 2); });
+	lua.set_function("print_this_env", [](int x, sol::this_environment) { REQUIRE(x == 2); });
 
 	sol::protected_function_result result = lua.safe_script(R"(
 		local var = nil

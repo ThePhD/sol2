@@ -75,9 +75,6 @@ sol::object BaseObject::getAsRetyped(
 	case 1:
 		std::cout << "Retyping as armor." << std::endl;
 		switch (Lifetime) {
-		case BaseObjectLifetime::Value:
-			return sol::make_object(
-			     L, *static_cast<const Armor*>(this));
 		case BaseObjectLifetime::Pointer:
 			return sol::make_object(
 			     L, static_cast<const Armor*>(this));
@@ -85,13 +82,14 @@ sol::object BaseObject::getAsRetyped(
 			return sol::make_object(L,
 			     std::make_shared<Armor>(
 			          *static_cast<const Armor*>(this)));
+		case BaseObjectLifetime::Value:
+		default:
+			return sol::make_object(
+			     L, *static_cast<const Armor*>(this));
 		}
 	case 2:
 		std::cout << "Retyping as weapon." << std::endl;
 		switch (Lifetime) {
-		case BaseObjectLifetime::Value:
-			return sol::make_object(
-			     L, *static_cast<const Weapon*>(this));
 		case BaseObjectLifetime::Pointer:
 			return sol::make_object(
 			     L, static_cast<const Weapon*>(this));
@@ -99,6 +97,10 @@ sol::object BaseObject::getAsRetyped(
 			return sol::make_object(L,
 			     std::make_shared<Weapon>(
 			          *static_cast<const Weapon*>(this)));
+		case BaseObjectLifetime::Value:
+		default:
+			return sol::make_object(
+			     L, *static_cast<const Weapon*>(this));
 		}
 	default:
 		std::cout

@@ -910,8 +910,14 @@ namespace sol { namespace stack {
 					lua_pop(L, 2);
 				}
 			}
-			T* obj = static_cast<T*>(udata);
-			return obj;
+			if constexpr (std::is_function_v<T>) {
+				T* func = reinterpret_cast<T*>(udata);
+				return func;
+			}
+			else {
+				T* obj = static_cast<T*>(udata);
+				return obj;
+			}
 		}
 
 		static T& get(lua_State* L, int index, record& tracking) {

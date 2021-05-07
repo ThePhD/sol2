@@ -136,9 +136,10 @@ namespace itsy_bitsy {
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #pragma pack(1)
-struct flags_t {
+struct alignas(sizeof(uint32_t)) flags_t {
 #else
-struct __attribute__((packed, aligned(1))) flags_t {
+struct __attribute__((packed, aligned(sizeof(uint32_t))))
+flags_t {
 #endif
 	uint8_t C : 1;
 	uint8_t N : 1;
