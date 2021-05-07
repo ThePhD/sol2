@@ -127,3 +127,5 @@ LuaJIT-2.0/
 LuaJIT-2.1/
 lua-5.1/
 lua-5.2/
+~syncthing*
+.tmp

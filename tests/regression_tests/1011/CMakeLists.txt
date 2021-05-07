@@ -28,8 +28,18 @@ file(GLOB_RECURSE sources
 
 sol2_create_basic_test(sol2.tests.regression_1011 sol2::sol2 ${sources})
 sol2_create_basic_test(sol2.tests.regression_1011.SOL_ALL_SAFETIES_ON sol2::sol2 ${sources})
-target_compile_definitions(sol2.tests.regression_1011.SOL_ALL_SAFETIES_ON PRIVATE
+target_compile_options(sol2.tests.regression_1011
+	PRIVATE
+	${--allow-unreachable-code})
+target_compile_definitions(sol2.tests.regression_1011.SOL_ALL_SAFETIES_ON
+	PRIVATE
 	SOL_ALL_SAFETIES_ON=1)
+target_compile_options(sol2.tests.regression_1011.SOL_ALL_SAFETIES_ON
+	PRIVATE
+	${--allow-unreachable-code})
 if (SOL2_TESTS_SINGLE)
 	sol2_create_basic_test(sol2.single.tests.regression_1011 sol2::sol2::single ${sources})
+	target_compile_options(sol2.single.tests.regression_1011
+		PRIVATE
+		${--allow-unreachable-code})
 endif()
