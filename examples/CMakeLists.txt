@@ -44,6 +44,8 @@ function(sol2_add_example_properties target-name)
 		${--allow-unknown-warning-option}
 		${--allow-noexcept-type}
 		${--allow-microsoft-cast}
+		${--allow-unreachable-code}
+		${--allow-padding-from-alignment}
 	)
 
 	target_compile_definitions(${target-name}
