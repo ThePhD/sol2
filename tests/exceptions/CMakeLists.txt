@@ -28,12 +28,25 @@ file(GLOB sources
 	source/*.cpp)
 
 sol2_create_basic_test(sol2.tests.exceptions sol2::sol2 ${sources})
-target_compile_definitions(sol2.tests.exceptions PRIVATE
-	SOL_ALL_SAFETIES_ON=1)
-target_compile_options(sol2.tests.exceptions PRIVATE
-	${--allow-unreachable-code})
 sol2_create_basic_test(sol2.tests.exceptions.SOL_ALL_SAFETIES_ON sol2::sol2 ${sources})
-target_compile_definitions(sol2.tests.exceptions.SOL_ALL_SAFETIES_ON PRIVATE
-	SOL_ALL_SAFETIES_ON=1)
-target_compile_options(sol2.tests.exceptions.SOL_ALL_SAFETIES_ON PRIVATE
+target_compile_options(sol2.tests.exceptions
+	PRIVATE
 	${--allow-unreachable-code})
+target_compile_options(sol2.tests.exceptions.SOL_ALL_SAFETIES_ON
+	PRIVATE
+	${--allow-unreachable-code})
+target_compile_definitions(sol2.tests.exceptions.SOL_ALL_SAFETIES_ON
+	PRIVATE
+	SOL_ALL_SAFETIES_ON=1)
+
+if (WAY_TOO_BUSTED_RIGHT_NOW)
+
+sol2_create_basic_test(sol2.tests.exceptions.SOL_EXCEPTIONS_ALWAYS_UNSAFE sol2::sol2 ${sources})
+target_compile_options(sol2.tests.exceptions.SOL_EXCEPTIONS_ALWAYS_UNSAFE
+	PRIVATE
+	${--allow-unreachable-code})
+target_compile_definitions(sol2.tests.exceptions.SOL_EXCEPTIONS_ALWAYS_UNSAFE
+	PRIVATE
+	SOL_EXCEPTIONS_ALWAYS_UNSAFE=0)
+
+endif()

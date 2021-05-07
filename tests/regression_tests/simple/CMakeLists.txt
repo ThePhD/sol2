@@ -27,7 +27,17 @@ file(GLOB_RECURSE sources
 	CONFIGURE_DEPENDS
 	source/*.cpp)
 
-sol2_create_basic_test(sol2.tests.regression sol2::sol2 ${sources})
+sol2_create_basic_test(sol2.tests.regression.simple sol2::sol2 ${sources})
+sol2_create_basic_test(sol2.tests.regression.simple.SOL_ALL_SAFETIES_ON sol2::sol2 ${sources})
+target_compile_options(sol2.tests.regression.simple
+	PRIVATE ${--allow-unreachable-code})
+target_compile_options(sol2.tests.regression.simple.SOL_ALL_SAFETIES_ON
+	PRIVATE ${--allow-unreachable-code})
 if (SOL2_TESTS_SINGLE)
-	sol2_create_basic_test(sol2.single.tests.regression sol2::sol2::single ${sources})
+	sol2_create_basic_test(sol2.single.tests.regression.simple sol2::sol2::single ${sources})
+	sol2_create_basic_test(sol2.single.tests.regression.simple.SOL_ALL_SAFETIES_ON sol2::sol2::single ${sources})
+	target_compile_options(sol2.single.tests.regression.simple
+		PRIVATE ${--allow-unreachable-code})
+	target_compile_definitions(sol2.single.tests.regression.simple.SOL_ALL_SAFETIES_ON
+		PRIVATE SOL_ALL_SAFETIES_ON=1)
 endif()

@@ -29,5 +29,6 @@ file(GLOB sources
 
 sol2_create_basic_test(sol2.tests.numerics sol2::sol2 ${sources})
 sol2_create_basic_test(sol2.tests.numerics.SOL_ALL_SAFETIES_ON sol2::sol2 ${sources})
-target_compile_definitions(sol2.tests.numerics.SOL_ALL_SAFETIES_ON PRIVATE
+target_compile_definitions(sol2.tests.numerics.SOL_ALL_SAFETIES_ON
+	PRIVATE
 	SOL_ALL_SAFETIES_ON=1)
