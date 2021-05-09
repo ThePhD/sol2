@@ -78,6 +78,8 @@ function(sol2_create_basic_test test_target_name target_sol)
 		PRIVATE ${target_sol})
 	target_compile_definitions(${test_target_name}
 		PRIVATE SOL_ALL_SAFETIES_ON=1)
+	target_compile_definitions(${test_target_name}
+		PRIVATE SOL_TESTS_SIZEOF_VOID_P=${CMAKE_SIZEOF_VOID_P})
 endfunction()
 
 add_subdirectory(inclusion)
