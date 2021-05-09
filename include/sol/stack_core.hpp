@@ -78,35 +78,25 @@ namespace sol {
 #endif
 		}
 
-		inline std::uintptr_t align(std::size_t alignment, std::size_t size, std::uintptr_t ptr, std::size_t& space, std::size_t& required_space) {
+		inline std::uintptr_t align(std::size_t alignment, std::uintptr_t ptr, std::size_t& space) {
 			// this handles arbitrary alignments...
 			// make this into a power-of-2-only?
 			// actually can't: this is a C++14-compatible framework,
 			// power of 2 alignment is C++17
-			std::uintptr_t initial = ptr;
-			std::uintptr_t offby = static_cast<std::uintptr_t>(initial % alignment);
+			std::uintptr_t offby = static_cast<std::uintptr_t>(ptr % alignment);
 			std::uintptr_t padding = (alignment - offby) % alignment;
-			required_space += size + padding;
-			if (space < required_space) {
-				return 0;
-			}
 			ptr += padding;
 			space -= padding;
 			return ptr;
 		}
 
-		inline std::uintptr_t align(std::size_t alignment, std::size_t size, std::uintptr_t ptr, std::size_t& space) {
-			std::size_t required_space = 0;
-			return align(alignment, size, ptr, space, required_space);
+		inline void* align(std::size_t alignment, void* ptr, std::size_t& space) {
+			return reinterpret_cast<void*>(align(alignment, reinterpret_cast<std::uintptr_t>(ptr), space));
 		}
 
-		inline void* align(std::size_t alignment, std::size_t size, void* ptr, std::size_t& space) {
-			return reinterpret_cast<void*>(align(alignment, size, reinterpret_cast<std::uintptr_t>(ptr), space));
-		}
-
-		inline std::uintptr_t align_one(std::size_t a, std::size_t s, std::uintptr_t target_alignment) {
+		inline std::uintptr_t align_one(std::size_t alignment, std::size_t size, std::uintptr_t target_alignment) {
 			std::size_t space = (std::numeric_limits<std::size_t>::max)();
-			return align(a, s, target_alignment, space) + s;
+			return align(alignment, target_alignment, space) + size;
 		}
 
 		template <typename... Args>
@@ -128,7 +118,7 @@ namespace sol {
 				return ptr;
 			}
 			std::size_t space = (std::numeric_limits<std::size_t>::max)();
-			return align(std::alignment_of<void*>::value, sizeof(void*), ptr, space);
+			return align(std::alignment_of<void*>::value, ptr, space);
 		}
 
 		template <bool pre_aligned = false, bool pre_shifted = false>
@@ -150,7 +140,7 @@ namespace sol {
 				return static_cast<void*>(static_cast<void**>(ptr) + 1);
 			}
 			std::size_t space = (std::numeric_limits<std::size_t>::max)();
-			return align(std::alignment_of<unique_destructor>::value, sizeof(unique_destructor), ptr, space);
+			return align(std::alignment_of<unique_destructor>::value, ptr, space);
 		}
 
 		template <bool pre_aligned = false, bool pre_shifted = false>
@@ -172,7 +162,7 @@ namespace sol {
 				return ptr;
 			}
 			std::size_t space = (std::numeric_limits<std::size_t>::max)();
-			return align(std::alignment_of<unique_tag>::value, sizeof(unique_tag), ptr, space);
+			return align(std::alignment_of<unique_tag>::value, ptr, space);
 		}
 
 		template <typename T, bool pre_aligned = false, bool pre_shifted = false>
@@ -195,7 +185,7 @@ namespace sol {
 				return ptr;
 			}
 			std::size_t space = (std::numeric_limits<std::size_t>::max)();
-			return align(std::alignment_of_v<T>, sizeof(T), ptr, space);
+			return align(std::alignment_of_v<T>, ptr, space);
 		}
 
 		template <typename T>
@@ -212,7 +202,7 @@ namespace sol {
 				return ptr;
 			}
 			std::size_t space = (std::numeric_limits<std::size_t>::max)();
-			return align(std::alignment_of_v<T>, sizeof(T), ptr, space);
+			return align(std::alignment_of_v<T>, ptr, space);
 		}
 
 		template <typename T>
@@ -234,14 +224,14 @@ namespace sol {
 
 			std::size_t allocated_size = initial_size;
 			void* unadjusted = alloc_newuserdata(L, initial_size);
-			void* adjusted = align(std::alignment_of<T*>::value, sizeof(T*), unadjusted, allocated_size);
+			void* adjusted = align(std::alignment_of<T*>::value, unadjusted, allocated_size);
 			if (adjusted == nullptr) {
 				lua_pop(L, 1);
 				// what kind of absolute garbage trash allocator are we dealing with?
 				// whatever, add some padding in the case of MAXIMAL alignment waste...
 				allocated_size = misaligned_size;
 				unadjusted = alloc_newuserdata(L, allocated_size);
-				adjusted = align(std::alignment_of<T*>::value, sizeof(T*), unadjusted, allocated_size);
+				adjusted = align(std::alignment_of<T*>::value, unadjusted, allocated_size);
 				if (adjusted == nullptr) {
 					// trash allocator can burn in hell
 					lua_pop(L, 1);
@@ -253,10 +243,10 @@ namespace sol {
 			return static_cast<T**>(adjusted);
 		}
 
-		inline bool attempt_alloc(lua_State* L, std::size_t ptr_align, std::size_t ptr_size, std::size_t value_align, std::size_t value_size,
+		inline bool attempt_alloc(lua_State* L, std::size_t ptr_align, std::size_t ptr_size, std::size_t value_align,
 		     std::size_t allocated_size, void*& pointer_adjusted, void*& data_adjusted) {
 			void* adjusted = alloc_newuserdata(L, allocated_size);
-			pointer_adjusted = align(ptr_align, ptr_size, adjusted, allocated_size);
+			pointer_adjusted = align(ptr_align, adjusted, allocated_size);
 			if (pointer_adjusted == nullptr) {
 				lua_pop(L, 1);
 				return false;
@@ -264,7 +254,7 @@ namespace sol {
 			// subtract size of what we're going to allocate there
 			allocated_size -= ptr_size;
 			adjusted = static_cast<void*>(static_cast<char*>(pointer_adjusted) + ptr_size);
-			data_adjusted = align(value_align, value_size, adjusted, allocated_size);
+			data_adjusted = align(value_align, adjusted, allocated_size);
 			if (data_adjusted == nullptr) {
 				lua_pop(L, 1);
 				return false;
@@ -272,10 +262,10 @@ namespace sol {
 			return true;
 		}
 
-		inline bool attempt_alloc_unique(lua_State* L, std::size_t ptr_align, std::size_t ptr_size, std::size_t real_align, std::size_t real_size,
+		inline bool attempt_alloc_unique(lua_State* L, std::size_t ptr_align, std::size_t ptr_size, std::size_t real_align,
 		     std::size_t allocated_size, void*& pointer_adjusted, void*& dx_adjusted, void*& id_adjusted, void*& data_adjusted) {
 			void* adjusted = alloc_newuserdata(L, allocated_size);
-			pointer_adjusted = align(ptr_align, ptr_size, adjusted, allocated_size);
+			pointer_adjusted = align(ptr_align, adjusted, allocated_size);
 			if (pointer_adjusted == nullptr) {
 				lua_pop(L, 1);
 				return false;
@@ -283,7 +273,7 @@ namespace sol {
 			allocated_size -= ptr_size;
 
 			adjusted = static_cast<void*>(static_cast<char*>(pointer_adjusted) + ptr_size);
-			dx_adjusted = align(std::alignment_of_v<unique_destructor>, sizeof(unique_destructor), adjusted, allocated_size);
+			dx_adjusted = align(std::alignment_of_v<unique_destructor>, adjusted, allocated_size);
 			if (dx_adjusted == nullptr) {
 				lua_pop(L, 1);
 				return false;
@@ -292,7 +282,7 @@ namespace sol {
 
 			adjusted = static_cast<void*>(static_cast<char*>(dx_adjusted) + sizeof(unique_destructor));
 
-			id_adjusted = align(std::alignment_of_v<unique_tag>, sizeof(unique_tag), adjusted, allocated_size);
+			id_adjusted = align(std::alignment_of_v<unique_tag>, adjusted, allocated_size);
 			if (id_adjusted == nullptr) {
 				lua_pop(L, 1);
 				return false;
@@ -300,7 +290,7 @@ namespace sol {
 			allocated_size -= sizeof(unique_tag);
 
 			adjusted = static_cast<void*>(static_cast<char*>(id_adjusted) + sizeof(unique_tag));
-			data_adjusted = align(real_align, real_size, adjusted, allocated_size);
+			data_adjusted = align(real_align, adjusted, allocated_size);
 			if (data_adjusted == nullptr) {
 				lua_pop(L, 1);
 				return false;
@@ -347,14 +337,14 @@ namespace sol {
 			void* pointer_adjusted;
 			void* data_adjusted;
 			bool result
-			     = attempt_alloc(L, std::alignment_of_v<T*>, sizeof(T*), std::alignment_of_v<T>, sizeof(T), initial_size, pointer_adjusted, data_adjusted);
+			     = attempt_alloc(L, std::alignment_of_v<T*>, sizeof(T*), std::alignment_of_v<T>, initial_size, pointer_adjusted, data_adjusted);
 			if (!result) {
 				// we're likely to get something that fails to perform the proper allocation a second time,
 				// so we use the suggested_new_size bump to help us out here
 				pointer_adjusted = nullptr;
 				data_adjusted = nullptr;
 				result = attempt_alloc(
-				     L, std::alignment_of_v<T*>, sizeof(T*), std::alignment_of_v<T>, sizeof(T), misaligned_size, pointer_adjusted, data_adjusted);
+				     L, std::alignment_of_v<T*>, sizeof(T*), std::alignment_of_v<T>, misaligned_size, pointer_adjusted, data_adjusted);
 				if (!result) {
 					if (pointer_adjusted == nullptr) {
 						luaL_error(L, "aligned allocation of userdata block (pointer section) for '%s' failed", detail::demangle<T>().c_str());
@@ -403,7 +393,6 @@ namespace sol {
 			     std::alignment_of_v<T*>,
 			     sizeof(T*),
 			     std::alignment_of_v<Real>,
-			     sizeof(Real),
 			     initial_size,
 			     pointer_adjusted,
 			     dx_adjusted,
@@ -420,7 +409,6 @@ namespace sol {
 				     std::alignment_of_v<T*>,
 				     sizeof(T*),
 				     std::alignment_of_v<Real>,
-				     sizeof(Real),
 				     misaligned_size,
 				     pointer_adjusted,
 				     dx_adjusted,
@@ -467,13 +455,13 @@ namespace sol {
 
 			std::size_t allocated_size = initial_size;
 			void* unadjusted = alloc_newuserdata(L, allocated_size);
-			void* adjusted = align(std::alignment_of_v<T>, sizeof(T), unadjusted, allocated_size);
+			void* adjusted = align(std::alignment_of_v<T>, unadjusted, allocated_size);
 			if (adjusted == nullptr) {
 				lua_pop(L, 1);
 				// try again, add extra space for alignment padding
 				allocated_size = misaligned_size;
 				unadjusted = alloc_newuserdata(L, allocated_size);
-				adjusted = align(std::alignment_of_v<T>, sizeof(T), unadjusted, allocated_size);
+				adjusted = align(std::alignment_of_v<T>, unadjusted, allocated_size);
 				if (adjusted == nullptr) {
 					lua_pop(L, 1);
 					luaL_error(L, "cannot properly align memory for '%s'", detail::demangle<T>().data());
