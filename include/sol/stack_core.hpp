@@ -78,7 +78,7 @@ namespace sol {
 #endif
 		}
 
-		inline std::uintptr_t align(std::size_t alignment, std::uintptr_t ptr, std::size_t& space) {
+		constexpr std::uintptr_t align(std::size_t alignment, std::uintptr_t ptr, std::size_t& space) {
 			// this handles arbitrary alignments...
 			// make this into a power-of-2-only?
 			// actually can't: this is a C++14-compatible framework,
@@ -94,13 +94,13 @@ namespace sol {
 			return reinterpret_cast<void*>(align(alignment, reinterpret_cast<std::uintptr_t>(ptr), space));
 		}
 
-		inline std::uintptr_t align_one(std::size_t alignment, std::size_t size, std::uintptr_t target_alignment) {
+		constexpr std::uintptr_t align_one(std::size_t alignment, std::size_t size, std::uintptr_t target_alignment) {
 			std::size_t space = (std::numeric_limits<std::size_t>::max)();
 			return align(alignment, target_alignment, space) + size;
 		}
 
 		template <typename... Args>
-		std::size_t aligned_space_for(std::uintptr_t alignment) {
+		constexpr std::size_t aligned_space_for(std::uintptr_t alignment) {
 			std::uintptr_t start = alignment;
 			(void)detail::swallow { int {}, (alignment = align_one(std::alignment_of_v<Args>, sizeof(Args), alignment), int {})... };
 			return static_cast<std::size_t>(alignment - start);
@@ -219,8 +219,8 @@ namespace sol {
 				T** pointerpointer = static_cast<T**>(alloc_newuserdata(L, sizeof(T*)));
 				return pointerpointer;
 			}
-			static const std::size_t initial_size = aligned_space_for<T*>(0x0);
-			static const std::size_t misaligned_size = aligned_space_for<T*>(0x1);
+			constexpr std::size_t initial_size = aligned_space_for<T*>(0x0);
+			constexpr std::size_t misaligned_size = aligned_space_for<T*>(0x1);
 
 			std::size_t allocated_size = initial_size;
 			void* unadjusted = alloc_newuserdata(L, initial_size);
@@ -331,8 +331,8 @@ namespace sol {
 			compilers are optimized for aligned reads/writes
 			(and clang will barf UBsan errors on us for not being aligned)
 			*/
-			static const std::size_t initial_size = aligned_space_for<T*, T>(0x0);
-			static const std::size_t misaligned_size = aligned_space_for<T*, T>(0x1);
+			constexpr std::size_t initial_size = aligned_space_for<T*, T>(0x0);
+			constexpr std::size_t misaligned_size = aligned_space_for<T*, T>(0x1);
 
 			void* pointer_adjusted;
 			void* data_adjusted;
@@ -382,8 +382,8 @@ namespace sol {
 				return mem;
 			}
 
-			static const std::size_t initial_size = aligned_space_for<T*, unique_destructor, unique_tag, Real>(0x0);
-			static const std::size_t misaligned_size = aligned_space_for<T*, unique_destructor, unique_tag, Real>(0x1);
+			constexpr std::size_t initial_size = aligned_space_for<T*, unique_destructor, unique_tag, Real>(0x0);
+			constexpr std::size_t misaligned_size = aligned_space_for<T*, unique_destructor, unique_tag, Real>(0x1);
 
 			void* pointer_adjusted;
 			void* dx_adjusted;
@@ -450,8 +450,8 @@ namespace sol {
 				return pointer;
 			}
 
-			static const std::size_t initial_size = aligned_space_for<T>(0x0);
-			static const std::size_t misaligned_size = aligned_space_for<T>(0x1);
+			constexpr std::size_t initial_size = aligned_space_for<T>(0x0);
+			constexpr std::size_t misaligned_size = aligned_space_for<T>(0x1);
 
 			std::size_t allocated_size = initial_size;
 			void* unadjusted = alloc_newuserdata(L, allocated_size);
