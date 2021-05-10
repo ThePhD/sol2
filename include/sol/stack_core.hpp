@@ -94,16 +94,35 @@ namespace sol {
 			return reinterpret_cast<void*>(align(alignment, reinterpret_cast<std::uintptr_t>(ptr), space));
 		}
 
-		constexpr std::uintptr_t align_one(std::size_t alignment, std::size_t size, std::uintptr_t target_alignment) {
+		constexpr std::uintptr_t align_one(std::size_t alignment, std::size_t size, std::uintptr_t ptr) {
 			std::size_t space = (std::numeric_limits<std::size_t>::max)();
-			return align(alignment, target_alignment, space) + size;
+			return align(alignment, ptr, space) + size;
 		}
 
 		template <typename... Args>
-		constexpr std::size_t aligned_space_for(std::uintptr_t alignment) {
-			std::uintptr_t start = alignment;
-			(void)detail::swallow { int {}, (alignment = align_one(std::alignment_of_v<Args>, sizeof(Args), alignment), int {})... };
-			return static_cast<std::size_t>(alignment - start);
+		constexpr std::size_t aligned_space_for(std::uintptr_t ptr) {
+			std::uintptr_t end = ptr;
+			((end = align_one(alignof(Args), sizeof(Args), end)), ...);
+			return static_cast<std::size_t>(end - ptr);
+		}
+
+		template <typename... Args>
+		constexpr std::size_t aligned_space_for() {
+			static_assert(sizeof...(Args) > 0);
+
+			constexpr std::size_t max_arg_alignment = (std::max)({ alignof(Args)... });
+			if constexpr (max_arg_alignment <= alignof(std::max_align_t)) {
+				// If all types are `good enough`, simply calculate alignment in case of the worst allocator
+				std::size_t worst_required_size = 0;
+				for (std::size_t ptr = 0; ptr < max_arg_alignment; ptr++) {
+					worst_required_size = std::max(worst_required_size, aligned_space_for<Args...>(ptr));
+				}
+				return worst_required_size;
+			}
+			else {
+				// For over-aligned types let's assume that every Arg in Args starts at the worst aligned address
+				return (aligned_space_for<Args>(0x1) + ...);
+			}
 		}
 
 		inline void* align_usertype_pointer(void* ptr) {
@@ -219,26 +238,17 @@ namespace sol {
 				T** pointerpointer = static_cast<T**>(alloc_newuserdata(L, sizeof(T*)));
 				return pointerpointer;
 			}
-			constexpr std::size_t initial_size = aligned_space_for<T*>(0x0);
-			constexpr std::size_t misaligned_size = aligned_space_for<T*>(0x1);
+			constexpr std::size_t initial_size = aligned_space_for<T*>();
 
 			std::size_t allocated_size = initial_size;
 			void* unadjusted = alloc_newuserdata(L, initial_size);
 			void* adjusted = align(std::alignment_of<T*>::value, unadjusted, allocated_size);
 			if (adjusted == nullptr) {
+				// trash allocator can burn in hell
 				lua_pop(L, 1);
-				// what kind of absolute garbage trash allocator are we dealing with?
-				// whatever, add some padding in the case of MAXIMAL alignment waste...
-				allocated_size = misaligned_size;
-				unadjusted = alloc_newuserdata(L, allocated_size);
-				adjusted = align(std::alignment_of<T*>::value, unadjusted, allocated_size);
-				if (adjusted == nullptr) {
-					// trash allocator can burn in hell
-					lua_pop(L, 1);
-					// luaL_error(L, "if you are the one that wrote this allocator you should feel bad for doing a
-					// worse job than malloc/realloc and should go read some books, yeah?");
-					luaL_error(L, "cannot properly align memory for '%s'", detail::demangle<T*>().data());
-				}
+				// luaL_error(L, "if you are the one that wrote this allocator you should feel bad for doing a
+				// worse job than malloc/realloc and should go read some books, yeah?");
+				luaL_error(L, "cannot properly align memory for '%s'", detail::demangle<T*>().data());
 			}
 			return static_cast<T**>(adjusted);
 		}
@@ -316,44 +326,20 @@ namespace sol {
 				return allocationtarget;
 			}
 
-			/* the assumption is that `alloc_newuserdata` -- unless someone
-			passes a specific lua_Alloc that gives us bogus, un-aligned pointers
-			-- uses malloc, which tends to hand out more or less aligned pointers to memory
-			(most of the time, anyhow)
-
-			but it's not guaranteed, so we have to do a post-adjustment check and increase padding
-
-			we do this preliminarily with compile-time stuff, to see
-			if we strike lucky with the allocator and alignment values
-
-			otherwise, we have to re-allocate the userdata and
-			over-allocate some space for additional padding because
-			compilers are optimized for aligned reads/writes
-			(and clang will barf UBsan errors on us for not being aligned)
-			*/
-			constexpr std::size_t initial_size = aligned_space_for<T*, T>(0x0);
-			constexpr std::size_t misaligned_size = aligned_space_for<T*, T>(0x1);
+			constexpr std::size_t initial_size = aligned_space_for<T*, T>();
 
 			void* pointer_adjusted;
 			void* data_adjusted;
 			bool result
 			     = attempt_alloc(L, std::alignment_of_v<T*>, sizeof(T*), std::alignment_of_v<T>, initial_size, pointer_adjusted, data_adjusted);
 			if (!result) {
-				// we're likely to get something that fails to perform the proper allocation a second time,
-				// so we use the suggested_new_size bump to help us out here
-				pointer_adjusted = nullptr;
-				data_adjusted = nullptr;
-				result = attempt_alloc(
-				     L, std::alignment_of_v<T*>, sizeof(T*), std::alignment_of_v<T>, misaligned_size, pointer_adjusted, data_adjusted);
-				if (!result) {
-					if (pointer_adjusted == nullptr) {
-						luaL_error(L, "aligned allocation of userdata block (pointer section) for '%s' failed", detail::demangle<T>().c_str());
-					}
-					else {
-						luaL_error(L, "aligned allocation of userdata block (data section) for '%s' failed", detail::demangle<T>().c_str());
-					}
-					return nullptr;
+				if (pointer_adjusted == nullptr) {
+					luaL_error(L, "aligned allocation of userdata block (pointer section) for '%s' failed", detail::demangle<T>().c_str());
 				}
+				else {
+					luaL_error(L, "aligned allocation of userdata block (data section) for '%s' failed", detail::demangle<T>().c_str());
+				}
+				return nullptr;
 			}
 
 			T** pointerpointer = reinterpret_cast<T**>(pointer_adjusted);
@@ -382,8 +368,7 @@ namespace sol {
 				return mem;
 			}
 
-			constexpr std::size_t initial_size = aligned_space_for<T*, unique_destructor, unique_tag, Real>(0x0);
-			constexpr std::size_t misaligned_size = aligned_space_for<T*, unique_destructor, unique_tag, Real>(0x1);
+			constexpr std::size_t initial_size = aligned_space_for<T*, unique_destructor, unique_tag, Real>();
 
 			void* pointer_adjusted;
 			void* dx_adjusted;
@@ -399,33 +384,16 @@ namespace sol {
 			     id_adjusted,
 			     data_adjusted);
 			if (!result) {
-				// we're likely to get something that fails to perform the proper allocation a second time,
-				// so we use the suggested_new_size bump to help us out here
-				pointer_adjusted = nullptr;
-				dx_adjusted = nullptr;
-				id_adjusted = nullptr;
-				data_adjusted = nullptr;
-				result = attempt_alloc_unique(L,
-				     std::alignment_of_v<T*>,
-				     sizeof(T*),
-				     std::alignment_of_v<Real>,
-				     misaligned_size,
-				     pointer_adjusted,
-				     dx_adjusted,
-				     id_adjusted,
-				     data_adjusted);
-				if (!result) {
-					if (pointer_adjusted == nullptr) {
-						luaL_error(L, "aligned allocation of userdata block (pointer section) for '%s' failed", detail::demangle<T>().c_str());
-					}
-					else if (dx_adjusted == nullptr) {
-						luaL_error(L, "aligned allocation of userdata block (deleter section) for '%s' failed", detail::demangle<T>().c_str());
-					}
-					else {
-						luaL_error(L, "aligned allocation of userdata block (data section) for '%s' failed", detail::demangle<T>().c_str());
-					}
-					return nullptr;
+				if (pointer_adjusted == nullptr) {
+					luaL_error(L, "aligned allocation of userdata block (pointer section) for '%s' failed", detail::demangle<T>().c_str());
 				}
+				else if (dx_adjusted == nullptr) {
+					luaL_error(L, "aligned allocation of userdata block (deleter section) for '%s' failed", detail::demangle<T>().c_str());
+				}
+				else {
+					luaL_error(L, "aligned allocation of userdata block (data section) for '%s' failed", detail::demangle<T>().c_str());
+				}
+				return nullptr;
 			}
 
 			pref = static_cast<T**>(pointer_adjusted);
@@ -450,22 +418,14 @@ namespace sol {
 				return pointer;
 			}
 
-			constexpr std::size_t initial_size = aligned_space_for<T>(0x0);
-			constexpr std::size_t misaligned_size = aligned_space_for<T>(0x1);
+			constexpr std::size_t initial_size = aligned_space_for<T>();
 
 			std::size_t allocated_size = initial_size;
 			void* unadjusted = alloc_newuserdata(L, allocated_size);
 			void* adjusted = align(std::alignment_of_v<T>, unadjusted, allocated_size);
 			if (adjusted == nullptr) {
 				lua_pop(L, 1);
-				// try again, add extra space for alignment padding
-				allocated_size = misaligned_size;
-				unadjusted = alloc_newuserdata(L, allocated_size);
-				adjusted = align(std::alignment_of_v<T>, unadjusted, allocated_size);
-				if (adjusted == nullptr) {
-					lua_pop(L, 1);
-					luaL_error(L, "cannot properly align memory for '%s'", detail::demangle<T>().data());
-				}
+				luaL_error(L, "cannot properly align memory for '%s'", detail::demangle<T>().data());
 			}
 			return static_cast<T*>(adjusted);
 		}
