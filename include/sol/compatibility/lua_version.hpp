@@ -70,6 +70,14 @@
 	#define SOL_LUAJIT_VERSION_I_ 0
 #endif
 
+#if defined(SOL_LUAJIT_FFI_DISABLED)
+	#define SOL_LUAJIT_FFI_DISABLED_I_ SOL_ON
+#elif defined(LUAJIT_DISABLE_FFI)
+	#define SOL_LUAJIT_FFI_DISABLED_I_ SOL_ON
+#else
+	#define SOL_LUAJIT_FFI_DISABLED_I_ SOL_DEFAULT_OFF
+#endif
+
 #if defined(MOONJIT_VERSION)
 	#define SOL_USE_MOONJIT_I_ SOL_ON
 #else
