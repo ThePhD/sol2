@@ -9,7 +9,10 @@
 #include <sol/sol.hpp>
 #include <iostream>
 
+#if THIS_IS_BUSTED
+
 std::string testFunc(std::string str) {
+	std::cout << "in testFunc" << std::endl;
 	return std::string("hello ") + str;
 }
 
@@ -23,13 +26,17 @@ int main() {
 			function f ()
                 -- call a function with wrong arguments
                 -- to trigger lua_error
+			 print("calling function")
                 testFunc()
 			end
 		)");
 
+	std::cout << "bark" << std::endl;
 	sol::protected_function f(lua["f"]);
 
+	std::cout << "baa" << std::endl;
 	sol::protected_function_result result = f();
+	std::cout << "meow" << std::endl;
 	if (result.valid()) {
 		// Call succeeded
 		std::cout << "call succeeded" << std::endl;
@@ -41,3 +48,9 @@ int main() {
 		std::cout << "call failed, sol::error::what() is " << what << std::endl;
 	}
 }
+
+#else
+int main(int, char*[]) {
+	return 0;
+}
+#endif
