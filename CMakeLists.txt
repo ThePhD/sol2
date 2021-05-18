@@ -24,7 +24,7 @@
 # # # Required minimum version statement
 cmake_minimum_required(VERSION 3.16.0)
 # # # Project Include - file that is included after project declaration is finished
-set(CMAKE_PROJECT_INCLUDE "${CMAKE_SOURCE_DIR}/cmake/Includes/Project.cmake")
+set(CMAKE_PROJECT_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Includes/Project.cmake")
 
 # # # project declaration
 project(sol2 VERSION 4.0.0 LANGUAGES CXX C)
