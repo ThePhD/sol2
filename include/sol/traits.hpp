@@ -663,7 +663,7 @@ namespace sol { namespace meta {
 	template <typename T, typename CharT = char>
 	using is_string_constructible = meta::boolean<
 		is_string_literal_array_of_v<T,
-		     CharT> || std::is_same_v<T, const CharT*> || std::is_same_v<T, CharT> || is_string_of_v<T, CharT> || std::is_same_v<T, std::initializer_list<CharT>> || is_string_view_of_v<T, CharT>>;
+		     CharT> || std::is_same_v<T, const CharT*> || std::is_same_v<T, CharT> || is_string_of_v<T, CharT> || std::is_same_v<T, std::initializer_list<CharT>> || is_string_view_of_v<T, CharT> || std::is_null_pointer_v<T>>;
 
 	template <typename T, typename CharT = char>
 	constexpr inline bool is_string_constructible_v = is_string_constructible<T, CharT>::value;
