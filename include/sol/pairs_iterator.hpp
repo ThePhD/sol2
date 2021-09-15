@@ -24,25 +24,16 @@
 #ifndef SOL_PAIRS_ITERATOR_HPP
 #define SOL_PAIRS_ITERATOR_HPP
 
+#include <sol/version.hpp>
+
 #include <sol/reference.hpp>
 #include <sol/stack_reference.hpp>
 #include <sol/table_iterator.hpp>
 #include <sol/protected_function.hpp>
 
-namespace sol {
+#include <sol/detail/pairs.hpp>
 
-	namespace detail {
-		inline int c_lua_next(lua_State* L_) noexcept {
-			stack_reference table_stack_ref(L_, raw_index(1));
-			stateless_stack_reference key_stack_ref(L_, raw_index(2));
-			int result = lua_next(table_stack_ref.lua_state(), table_stack_ref.stack_index());
-			if (result == 0) {
-				stack::push(L_, lua_nil);
-				return 1;
-			}
-			return 2;
-		}
-	} // namespace detail
+namespace sol {
 
 	struct pairs_sentinel { };
 
@@ -108,7 +99,7 @@ namespace sol {
 				// just has a metatable, but does it have __pairs ?
 				stack_reference metatable(m_L, raw_index(abs_source_index));
 				stack::get_field<is_global_table_v<Source>, true>(m_L, meta_function::pairs, metatable.stack_index());
-				optional<protected_function> maybe_pairs_function = stack::pop<optional<function>>(m_L);
+				optional<protected_function> maybe_pairs_function = stack::pop<optional<protected_function>>(m_L);
 				if (maybe_pairs_function.has_value()) {
 					protected_function& pairs_function = *maybe_pairs_function;
 					protected_function_result next_fn_and_table_and_first_key = pairs_function(source_);
@@ -145,7 +136,7 @@ namespace sol {
 
 			// okay, so none of the above worked and now we need to create
 			// a shim / polyfill instead
-			stack::push(m_L, &detail::c_lua_next);
+			stack::push(m_L, &stack::stack_detail::c_lua_next);
 			m_next_function_ref = stack::pop<protected_function>(m_L);
 			m_table_ref = source_;
 			stack::push(m_L, lua_nil);

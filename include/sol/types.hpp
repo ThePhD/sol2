@@ -891,6 +891,15 @@ namespace sol {
 	struct is_to_stringable : meta::any<meta::supports_to_string_member<meta::unqualified_t<T>>, meta::supports_adl_to_string<meta::unqualified_t<T>>,
 	                               meta::supports_op_left_shift<std::ostream, meta::unqualified_t<T>>> { };
 
+	template <typename T>
+	inline constexpr bool is_to_stringable_v = is_to_stringable<T>::value;
+
+	template <typename T>
+	struct is_callable : std::true_type { };
+
+	template <typename T>
+	inline constexpr bool is_callable_v = is_callable_v<T>::value;
+
 	namespace detail {
 		template <typename T, typename = void>
 		struct lua_type_of : std::integral_constant<type, type::userdata> { };

@@ -26,8 +26,6 @@
 
 #include <sol/config.hpp>
 
-#include <cstdint>
-
 // clang-format off
 
 #define SOL_VERSION_MAJOR 3
@@ -46,45 +44,96 @@
 #define SOL_DEFAULT_ON  +
 #define SOL_DEFAULT_OFF -
 
-#if defined(_MSC_VER)
-	#if defined(__clang__)
-		#define SOL_COMPILER_CLANG_I_      SOL_OFF
-		#define SOL_COMPILER_GCC_I_        SOL_OFF
-		#define SOL_COMPILER_EDG_I_        SOL_OFF
-		#define SOL_COMPILER_VCXX_I_       SOL_ON
-		#define SOL_COMPILER_VCXX_CLANG_I_ SOL_ON
+#if defined(SOL_BUILD_CXX_MODE)
+	#if (SOL_BUILD_CXX_MODE != 0)
+		#define SOL_BUILD_CXX_MODE_I_ SOL_ON
 	#else
-		#define SOL_COMPILER_VCXX_CLANG_I_ SOL_OFF
-		#define SOL_COMPILER_CLANG_I_      SOL_OFF
-		#define SOL_COMPILER_GCC_I_        SOL_OFF
-		#define SOL_COMPILER_EDG_I_        SOL_OFF
-		#define SOL_COMPILER_VCXX_I_       SOL_ON
-		#define SOL_COMPILER_VCXX_CLANG_I_ SOL_OFF
+		#define SOL_BUILD_CXX_MODE_I_ SOL_OFF
 	#endif
-#elif defined(__clang__)
-	#define SOL_COMPILER_CLANG_I_ SOL_ON
-	#define SOL_COMPILER_GCC_I_   SOL_OFF
-	#define SOL_COMPILER_EDG_I_   SOL_OFF
-	#define SOL_COMPILER_VCXX_I_  SOL_OFF
-	#define SOL_COMPILER_VCXX_CLANG_I_ SOL_OFF
-#elif defined(__GNUC__)
-	#define SOL_COMPILER_CLANG_I_ SOL_OFF
-	#define SOL_COMPILER_GCC_I_   SOL_ON
-	#define SOL_COMPILER_EDG_I_   SOL_OFF
-	#define SOL_COMPILER_VCXX_I_  SOL_OFF
-	#define SOL_COMPILER_VCXX_CLANG_I_ SOL_OFF
+#elif defined(__cplusplus)
+	#define SOL_BUILD_CXX_MODE_I_ SOL_DEFAULT_ON
 #else
-	#define SOL_COMPILER_CLANG_I_ SOL_OFF
-	#define SOL_COMPILER_GCC_I_   SOL_OFF
-	#define SOL_COMPILER_EDG_I_   SOL_OFF
-	#define SOL_COMPILER_VCXX_I_  SOL_OFF
-	#define SOL_COMPILER_VCXX_CLANG_I_ SOL_OFF
+	#define SOL_BUILD_CXX_MODE_I_ SOL_DEFAULT_OFF
 #endif
 
-#if defined(__MINGW32__)
-	#define SOL_COMPILER_FRONTEND_MINGW_I_ SOL_ON
+#if defined(SOL_BUILD_C_MODE)
+	#if (SOL_BUILD_C_MODE != 0)
+		#define SOL_BUILD_C_MODE_I_ SOL_ON
+	#else
+		#define SOL_BUILD_C_MODE_I_ SOL_OFF
+	#endif
+#elif defined(__STDC__)
+	#define SOL_BUILD_C_MODE_I_ SOL_DEFAULT_ON
 #else
-	#define SOL_COMPILER_FRONTEND_MINGW_I_ SOL_OFF
+	#define SOL_BUILD_C_MODE_I_ SOL_DEFAULT_OFF
+#endif
+
+#if SOL_IS_ON(SOL_BUILD_C_MODE_I_)
+	#include <stddef.h>
+	#include <stdint.h>
+	#include <limits.h>
+#else
+	#include <cstddef>
+	#include <cstdint>
+	#include <climits>
+#endif
+
+#if defined(SOL_COMPILER_VCXX)
+	#if defined(SOL_COMPILER_VCXX != 0)
+		#define SOL_COMPILER_VCXX_I_ SOL_ON
+	#else
+		#define SOL_COMPILER_VCXX_I_ SOL_OFF
+	#endif
+#elif defined(_MSC_VER)
+	#define SOL_COMPILER_VCXX_I_ SOL_DEFAULT_ON
+#else
+	#define SOL_COMPILER_VCXX_I_ SOL_DEFAULT_OFF
+#endif
+
+#if defined(SOL_COMPILER_GCC)
+	#if defined(SOL_COMPILER_GCC != 0)
+		#define SOL_COMPILER_GCC_I_ SOL_ON
+	#else
+		#define SOL_COMPILER_GCC_I_ SOL_OFF
+	#endif
+#elif defined(__GNUC__)
+	#define SOL_COMPILER_GCC_I_ SOL_DEFAULT_ON
+#else
+	#define SOL_COMPILER_GCC_I_ SOL_DEFAULT_OFF
+#endif
+
+#if defined(SOL_COMPILER_CLANG)
+	#if defined(SOL_COMPILER_CLANG != 0)
+		#define SOL_COMPILER_CLANG_I_ SOL_ON
+	#else
+		#define SOL_COMPILER_CLANG_I_ SOL_OFF
+	#endif
+#elif defined(__clang__)
+	#define SOL_COMPILER_CLANG_I_ SOL_DEFAULT_ON
+#else
+	#define SOL_COMPILER_CLANG_I_ SOL_DEFAULT_OFF
+#endif
+
+#if defined(SOL_COMPILER_EDG)
+	#if defined(SOL_COMPILER_EDG != 0)
+		#define SOL_COMPILER_EDG_I_ SOL_ON
+	#else
+		#define SOL_COMPILER_EDG_I_ SOL_OFF
+	#endif
+#else
+	#define SOL_COMPILER_EDG_I_ SOL_DEFAULT_OFF
+#endif
+
+#if defined(SOL_COMPILER_MINGW)
+	#if (SOL_COMPILER_MINGW != 0)
+		#define SOL_COMPILER_MINGW_I_ SOL_ON
+	#else
+		#define SOL_COMPILER_MINGW_I_ SOL_OFF
+	#endif
+#elif defined(__MINGW32__)
+	#define SOL_COMPILER_MINGW_I_ SOL_DEFAULT_ON
+#else
+	#define SOL_COMPILER_MINGW_I_ SOL_DEFAULT_OFF
 #endif
 
 #if SIZE_MAX <= 0xFFFFULL
@@ -458,12 +507,12 @@
 	#if SOL_IS_ON(SOL_COMPILER_CLANG_I_) && SOL_IS_ON(SOL_PLATFORM_APPLE_I_)
 		#if defined(__has_include)
 			#if __has_include(<variant>)
-				#define SOL_STD_VARIANT_I_ SOL_ON
+				#define SOL_STD_VARIANT_I_ SOL_DEFAULT_ON
 			#else
-				#define SOL_STD_VARIANT_I_ SOL_OFF
+				#define SOL_STD_VARIANT_I_ SOL_DEFAULT_OFF
 			#endif
 		#else
-			#define SOL_STD_VARIANT_I_ SOL_OFF
+			#define SOL_STD_VARIANT_I_ SOL_DEFAULT_OFF
 		#endif
 	#else
 		#define SOL_STD_VARIANT_I_ SOL_DEFAULT_ON
@@ -550,7 +599,7 @@
 		#define SOL_USE_CXX_LUA_I_ SOL_OFF
 	#endif
 #else
-	#define SOL_USE_CXX_LUA_I_ SOL_OFF
+	#define SOL_USE_CXX_LUA_I_ SOL_DEFAULT_OFF
 #endif
 
 #if defined(SOL_USING_CXX_LUAJIT)
@@ -566,7 +615,7 @@
 		#define SOL_USE_CXX_LUAJIT_I_ SOL_OFF
 	#endif
 #else
-	#define SOL_USE_CXX_LUAJIT_I_ SOL_OFF
+	#define SOL_USE_CXX_LUAJIT_I_ SOL_DEFAULT_OFF
 #endif
 
 #if defined(SOL_NO_LUA_HPP)
@@ -614,7 +663,7 @@
 		#define SOL_USE_BOOST_I_ SOL_OFF
 	#endif
 #else
-		#define SOL_USE_BOOST_I_ SOL_OFF
+		#define SOL_USE_BOOST_I_ SOL_DEFAULT_OFF
 #endif
 
 #if defined(SOL_USE_UNSAFE_BASE_LOOKUP)
@@ -624,7 +673,7 @@
 		#define SOL_USE_UNSAFE_BASE_LOOKUP_I_ SOL_OFF
 	#endif
 #else
-	#define SOL_USE_UNSAFE_BASE_LOOKUP_I_ SOL_OFF
+	#define SOL_USE_UNSAFE_BASE_LOOKUP_I_ SOL_DEFAULT_OFF
 #endif
 
 #if defined(SOL_INSIDE_UNREAL)
@@ -635,7 +684,7 @@
 	#endif
 #else
 	#if defined(UE_BUILD_DEBUG) || defined(UE_BUILD_DEVELOPMENT) || defined(UE_BUILD_TEST) || defined(UE_BUILD_SHIPPING) || defined(UE_SERVER)
-		#define SOL_INSIDE_UNREAL_ENGINE_I_ SOL_ON
+		#define SOL_INSIDE_UNREAL_ENGINE_I_ SOL_DEFAULT_ON
 	#else
 		#define SOL_INSIDE_UNREAL_ENGINE_I_ SOL_DEFAULT_OFF
 	#endif
@@ -671,9 +720,15 @@
 	#define SOL_FUNCTION_CALL_VALUE_SEMANTICS_I_ SOL_DEFAULT_OFF
 #endif
 
-#if SOL_IS_ON(SOL_COMPILER_FRONTEND_MINGW_I_) && defined(__GNUC__) && (__GNUC__ < 6)
+#if defined(SOL_MINGW_CCTYPE_IS_POISONED)
+	#if (SOL_MINGW_CCTYPE_IS_POISONED != 0)
+		#define SOL_MINGW_CCTYPE_IS_POISONED_I_ SOL_ON
+	#else
+		#define SOL_MINGW_CCTYPE_IS_POISONED_I_ SOL_OFF
+	#endif
+#elif SOL_IS_ON(SOL_COMPILER_MINGW_I_) && defined(__GNUC__) && (__GNUC__ < 6)
 	// MinGW is off its rocker in some places...
-	#define SOL_MINGW_CCTYPE_IS_POISONED_I_ SOL_ON
+	#define SOL_MINGW_CCTYPE_IS_POISONED_I_ SOL_DEFAULT_ON
 #else
 	#define SOL_MINGW_CCTYPE_IS_POISONED_I_ SOL_DEFAULT_OFF
 #endif
@@ -685,7 +740,7 @@
 		#define SOL_CHAR8_T_I_ SOL_OFF
 	#endif
 #else
-	#ifdef __cpp_char8_t
+	#if defined(__cpp_char8_t)
 		#define SOL_CHAR8_T_I_ SOL_DEFAULT_ON
 	#else
 		#define SOL_CHAR8_T_I_ SOL_DEFAULT_OFF
@@ -712,7 +767,7 @@
 		#define SOL2_CI_I_ SOL_OFF
 	#endif
 #else
-	#define SOL2_CI_I_ SOL_OFF
+	#define SOL2_CI_I_ SOL_DEFAULT_OFF
 #endif
 
 #if defined(SOL_C_ASSERT)
@@ -727,6 +782,117 @@
 	#define SOL_USER_M_ASSERT_I_ SOL_DEFAULT_OFF
 #endif
 
+#if defined(SOL_HEADER_ONLY)
+	#if (SOL_HEADER_ONLY != 0)
+		#define SOL_HEADER_ONLY_I_ SOL_ON
+	#else
+		#define SOL_HEADER_ONLY_I_ SOL_OFF
+	#endif
+#else
+	#define SOL_HEADER_ONLY_I_ SOL_DEFAULT_ON
+#endif
+
+#if defined(SOL_BUILD)
+	#if (SOL_BUILD != 0)
+		#define SOL_BUILD_I_ SOL_ON
+	#else
+		#define SOL_BUILD_I_ SOL_OFF
+	#endif
+#elif SOL_IS_ON(SOL_HEADER_ONLY_I_)
+	#define SOL_BUILD_I_ SOL_DEFAULT_OFF
+#else
+	#define SOL_BUILD_I_ SOL_DEFAULT_ON
+#endif
+
+#if defined(SOL_DLL)
+	#if (SOL_DLL != 0)
+		#define SOL_DLL_I_ SOL_ON
+	#else
+		#define SOL_DLL_I_ SOL_OFF
+	#endif
+#elif SOL_IS_ON(SOL_HEADER_ONLY_I_)
+	#define SOL_DLL_I_ SOL_DEFAULT_OFF
+#else
+	#define SOL_DLL_I_ SOL_DEFAULT_OFF
+#endif
+
+#if defined(SOL_FUNC_DECL)
+	#define SOL_FUNC_DECL_I_ SOL_FUNC_DECL
+#elif SOL_IS_ON(SOL_HEADER_ONLY_I_)
+	#define SOL_FUNC_DECL_I_ 
+#elif SOL_IS_ON(SOL_DLL_I_)
+	#if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
+		#if SOL_IS_ON(SOL_BUILD_I_)
+			#define SOL_FUNC_DECL_I_ extern __declspec(dllexport)
+		#else
+			#define SOL_FUNC_DECL_I_ extern __declspec(dllimport)
+		#endif
+	#elif SOL_IS_ON(SOL_COMPILER_GCC_I_) || SOL_IS_ON(SOL_COMPILER_CLANG_I_)
+		#define SOL_FUNC_DECL_I_ extern __attribute__((visibility("default")))
+	#else
+		#define SOL_FUNC_DECL_I_ extern
+	#endif
+#endif
+
+#if defined(SOL_FUNC_DEFN)
+	#define SOL_FUNC_DEFN_I_ SOL_FUNC_DEFN
+#elif SOL_IS_ON(SOL_HEADER_ONLY_I_)
+	#define SOL_FUNC_DEFN_I_ inline
+#elif SOL_IS_ON(SOL_DLL_I_)
+	#if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
+		#if SOL_IS_ON(SOL_BUILD_I_)
+			#define SOL_FUNC_DEFN_I_ __declspec(dllexport)
+		#else
+			#define SOL_FUNC_DEFN_I_ __declspec(dllimport)
+		#endif
+	#elif SOL_IS_ON(SOL_COMPILER_GCC_I_) || SOL_IS_ON(SOL_COMPILER_CLANG_I_)
+		#define SOL_FUNC_DEFN_I_ __attribute__((visibility("default")))
+	#else
+		#define SOL_FUNC_DEFN_I_
+	#endif
+#endif
+
+#if defined(SOL_HIDDEN_FUNC_DECL)
+	#define SOL_HIDDEN_FUNC_DECL_I_ SOL_HIDDEN_FUNC_DECL
+#elif SOL_IS_ON(SOL_HEADER_ONLY_I_)
+	#define SOL_HIDDEN_FUNC_DECL_I_ 
+#elif SOL_IS_ON(SOL_DLL_I_)
+	#if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
+		#if SOL_IS_ON(SOL_BUILD_I_)
+			#define SOL_HIDDEN_FUNC_DECL_I_ extern __declspec(dllexport)
+		#else
+			#define SOL_HIDDEN_FUNC_DECL_I_ extern __declspec(dllimport)
+		#endif
+	#elif SOL_IS_ON(SOL_COMPILER_GCC_I_) || SOL_IS_ON(SOL_COMPILER_CLANG_I_)
+		#define SOL_HIDDEN_FUNC_DECL_I_ extern __attribute__((visibility("default")))
+	#else
+		#define SOL_HIDDEN_FUNC_DECL_I_ extern
+	#endif
+#endif
+
+#if defined(SOL_HIDDEN_FUNC_DEFN)
+	#define SOL_HIDDEN_FUNC_DEFN_I_ SOL_HIDDEN_FUNC_DEFN
+#elif SOL_IS_ON(SOL_HEADER_ONLY_I_)
+	#define SOL_HIDDEN_FUNC_DEFN_I_ inline
+#elif SOL_IS_ON(SOL_DLL_I_)
+	#if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
+		#if SOL_IS_ON(SOL_BUILD_I_)
+			#define SOL_HIDDEN_FUNC_DEFN_I_ 
+		#else
+			#define SOL_HIDDEN_FUNC_DEFN_I_ 
+		#endif
+	#elif SOL_IS_ON(SOL_COMPILER_GCC_I_) || SOL_IS_ON(SOL_COMPILER_CLANG_I_)
+		#define SOL_HIDDEN_FUNC_DEFN_I_ __attribute__((visibility("hidden")))
+	#else
+		#define SOL_HIDDEN_FUNC_DEFN_I_
+	#endif
+#endif
+
+#include <sol/prologue.hpp>
+#include <sol/epilogue.hpp>
+
 // clang-format on
+
+#include <sol/detail/build_version.hpp>
 
 #endif // SOL_VERSION_HPP

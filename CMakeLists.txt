@@ -29,8 +29,7 @@ set(CMAKE_PROJECT_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Includes/Project.cm
 # # # project declaration
 project(sol2 VERSION 4.0.0 LANGUAGES CXX C)
 
-if (PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-	set(SOL2_IS_TOP_LEVEL TRUE)
+if (sol2-is-top-level-project)
 	message(STATUS "sol2 is the top-level directory...")
 endif()
 
@@ -81,18 +80,24 @@ endif()
 # # # sol2 Source Groups
 # # Sources everyone is going to need
 # Header files
-file(GLOB SOL2_HEADER_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/include/sol*.hpp)
+file(GLOB_RECURSE sol2-headers
+	LIST_DIRECTORIES FALSE
+	CONFIGURE_DEPENDS
+	${CMAKE_CURRENT_SOURCE_DIR}/include/sol*.hpp
+)
+
+file(GLOB_RECURSE sol2-sources
+	LIST_DIRECTORIES FALSE
+	CONFIGURE_DEPENDS
+	${CMAKE_CURRENT_SOURCE_DIR}/source/**
+)
 
 # # # sol2 Library
 # # Add a target for sol2's library to be included by external users
 add_library(sol2 INTERFACE)
 add_library(sol2::sol2 ALIAS sol2)
-target_sources(sol2 INTERFACE ${SOL2_SINGLE_HEADER_SOURCES})
-set_target_properties(sol2
-	PROPERTIES
-	EXPORT_NAME sol2::sol2)
-
-target_include_directories(sol2 ${sol2-system-include} INTERFACE
+target_include_directories(sol2 ${sol2-system-include}
+	INTERFACE
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<INSTALL_INTERFACE:include>)
 
@@ -107,7 +112,8 @@ write_basic_package_version_file(
 	"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config-version.cmake"
 	COMPATIBILITY AnyNewerVersion)
 
-export(TARGETS sol2 FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-targets.cmake")
+export(TARGETS sol2
+	FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-targets.cmake")
 
 if(SOL2_ENABLE_INSTALL)
 	install(TARGETS sol2
@@ -126,8 +132,7 @@ if(SOL2_ENABLE_INSTALL)
 		DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sol2")
 endif()
 
-# # # Single header target
-# Find Python3 for single header / forward header generation
+# # # sol2 Library - Single header target
 if (SOL2_SINGLE)
 	message(STATUS "sol2 adding single...")
 	add_subdirectory(single)
@@ -169,7 +174,7 @@ else()
 endif()
 
 # # # Tests, Examples and other CI suites that come with sol2
-if (SOL2_IS_TOP_LEVEL AND (SOL2_DO_TESTS OR SOL2_DO_EXAMPLES))
+if (sol2-is-top-level-project)
 	# # # General project output locations
 	if (CMAKE_SIZEOF_VOID_P EQUAL 4)
 		set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/lib")
@@ -179,6 +184,14 @@ if (SOL2_IS_TOP_LEVEL AND (SOL2_DO_TESTS OR SOL2_DO_EXAMPLES))
 		set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64/lib")
 		set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64/bin")
 		set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64/bin")
+	endif()
+
+	if (NOT CMAKE_CXX_STANDARD GREATER_EQUAL 17)
+		set(CMAKE_CXX_STANDARD 17)
+	endif()
+
+	if (NOT CMAKE_C_STANDARD GREATER_EQUAL 11)
+		set(CMAKE_C_STANDARD 11)
 	endif()
 
 	# # # Libraries
@@ -255,7 +268,7 @@ if (SOL2_IS_TOP_LEVEL AND (SOL2_DO_TESTS OR SOL2_DO_EXAMPLES))
 	if (SOL2_DO_EXAMPLES)
 		# NOTE: will also add to tests if TESTS is defined
 		message(STATUS "sol2 adding examples...")
-		add_subdirectory(examples "${CMAKE_BINARY_DIR}/examples")
+		add_subdirectory(examples)
 	endif()
 	
 	# # # Tests
@@ -263,7 +276,7 @@ if (SOL2_IS_TOP_LEVEL AND (SOL2_DO_TESTS OR SOL2_DO_EXAMPLES))
 	if (SOL2_DO_TESTS)
 		# add subdir to get going
 		message(STATUS "sol2 adding tests...")
-		add_subdirectory(tests "${CMAKE_BINARY_DIR}/tests")
+		add_subdirectory(tests)
 	endif()
 
 	# # # Scratch Space

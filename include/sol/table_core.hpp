@@ -50,7 +50,7 @@ namespace sol {
 			lua_State* L;
 			int& pop_count;
 
-			ref_clean(lua_State* L_, int& pop_count_) : L(L_), pop_count(pop_count_) {
+			ref_clean(lua_State* L_, int& pop_count_) noexcept : L(L_), pop_count(pop_count_) {
 			}
 			~ref_clean() {
 				lua_pop(L, static_cast<int>(pop_count));
@@ -543,7 +543,8 @@ namespace sol {
 		table new_enum(const string_view& name, Args&&... args) {
 			table target = create_with(std::forward<Args>(args)...);
 			if (read_only) {
-				table x = create_with(meta_function::new_index, detail::fail_on_newindex, meta_function::index, target);
+				table x = create_with(
+				     meta_function::new_index, detail::fail_on_newindex, meta_function::index, target, meta_function::pairs, detail::enum_pairs_function);
 				table shim = create_named(name, metatable_key, x);
 				return shim;
 			}

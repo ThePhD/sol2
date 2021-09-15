@@ -159,15 +159,19 @@ namespace sol {
 					}
 				}
 				if (fx(meta_function::to_string)) {
-					if constexpr (is_to_stringable<T>::value && !meta::is_probably_stateless_lambda_v<T> && !std::is_member_pointer_v<T>) {
-						auto f = &detail::static_trampoline<&default_to_string<T>>;
-						ifx(meta_function::to_string, f);
+					if constexpr (is_to_stringable_v<T>) {
+						if constexpr (!meta::is_probably_stateless_lambda_v<T> && !std::is_member_pointer_v<T>) {
+							auto f = &detail::static_trampoline<&default_to_string<T>>;
+							ifx(meta_function::to_string, f);
+						}
 					}
 				}
 				if (fx(meta_function::call_function)) {
-					if constexpr (meta::call_operator_deducible_v<T>) {
-						auto f = &c_call<decltype(&T::operator()), &T::operator()>;
-						ifx(meta_function::call_function, f);
+					if constexpr (is_callable_v<T>) {
+						if constexpr (meta::call_operator_deducible_v<T>) {
+							auto f = &c_call<decltype(&T::operator()), &T::operator()>;
+							ifx(meta_function::call_function, f);
+						}
 					}
 				}
 			}
