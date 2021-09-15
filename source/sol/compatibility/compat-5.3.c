@@ -1,5 +1,9 @@
 #include <sol/compatibility/compat-5.3.h>
 
+#include <sol/version.hpp>
+
+#include <sol/prologue.hpp>
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,8 +52,8 @@
 #define COMPAT53_LUA_FILE_BUFFER_SIZE 4096
 #endif /* Lua File Buffer Size */
 
-
-static char* compat53_strerror(int en, char* buff, size_t sz) {
+SOL_FUNC_DEFN
+char* compat53_strerror(int en, char* buff, size_t sz) {
 #if COMPAT53_HAVE_STRERROR_R
 	/* use strerror_r here, because it's available on these specific platforms */
 	if (sz > 0) {
@@ -90,7 +94,7 @@ COMPAT53_API int lua_absindex(lua_State* L, int i) {
 	return i;
 }
 
-
+SOL_FUNC_DEFN
 static void compat53_call_lua(lua_State* L, char const code[], size_t len, int nargs, int nret) {
 	lua_rawgetp(L, LUA_REGISTRYINDEX, (void*)code);
 	if (lua_type(L, -1) != LUA_TFUNCTION) {
@@ -873,6 +877,7 @@ COMPAT53_API void luaL_requiref(lua_State* L, const char* modname, lua_CFunction
 
 #endif /* KEPLER_PROJECT_COMPAT53_C_ */
 
+#include <sol/epilogue.hpp>
 
 /*********************************************************************
  * This file contains parts of Lua 5.2's and Lua 5.3's source code:
