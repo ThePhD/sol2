@@ -898,7 +898,7 @@ namespace sol {
 	struct is_callable : std::true_type { };
 
 	template <typename T>
-	inline constexpr bool is_callable_v = is_callable_v<T>::value;
+	inline constexpr bool is_callable_v = is_callable<T>::value;
 
 	namespace detail {
 		template <typename T, typename = void>

@@ -104,7 +104,7 @@ namespace sol {
 		template <typename T>
 		table_proxy& operator=(T&& other) & {
 			using Tu = meta::unwrap_unqualified_t<T>;
-			if constexpr (!is_lua_reference_or_proxy_v<Tu> && meta::is_callable_v<Tu>) {
+			if constexpr (!is_lua_reference_or_proxy_v<Tu> && meta::is_invocable_v<Tu>) {
 				return set_function(std::forward<T>(other));
 			}
 			else {
@@ -115,7 +115,7 @@ namespace sol {
 		template <typename T>
 		table_proxy&& operator=(T&& other) && {
 			using Tu = meta::unwrap_unqualified_t<T>;
-			if constexpr (!is_lua_reference_or_proxy_v<Tu> && meta::is_callable_v<Tu> && !detail::is_msvc_callable_rigged_v<T>) {
+			if constexpr (!is_lua_reference_or_proxy_v<Tu> && meta::is_invocable_v<Tu> && !detail::is_msvc_callable_rigged_v<T>) {
 				return std::move(*this).set_function(std::forward<T>(other));
 			}
 			else {

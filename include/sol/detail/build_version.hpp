@@ -30,23 +30,13 @@
 
 // clang-format off
 
-#if defined(SOL_BUILD)
-	#if (SOL_BUILD != 0)
-		#define SOL_BUILD_I_ SOL_ON
-	#else
-		#define SOL_BUILD_I_ SOL_OFF
-	#endif
-#else
-	#define SOL_BUILD_I_ SOL_DEFAULT_OFF
-#endif // Building or not
-
 #if defined(SOL_DLL)
 	#if (SOL_DLL != 0)
 		#define SOL_DLL_I_ SOL_ON
 	#else
 		#define SOL_DLL_I_ SOL_OFF
 	#endif
-#elif SOL_IS_ON() && (defined(DLL_) || defined(_DLL))
+#elif SOL_IS_ON(SOL_COMPILER_VCXX_I_) && (defined(DLL_) || defined(_DLL))
 	#define SOL_DLL_I_ SOL_DEFAULT_ON
 #else
 	#define SOL_DLL_I_ SOL_DEFAULT_OFF
@@ -61,6 +51,18 @@
 #else
 	#define SOL_HEADER_ONLY_I_ SOL_DEFAULT_OFF
 #endif // Header only library
+
+#if defined(SOL_BUILD)
+	#if (SOL_BUILD != 0)
+		#define SOL_BUILD_I_ SOL_ON
+	#else
+		#define SOL_BUILD_I_ SOL_OFF
+	#endif
+#elif SOL_IS_ON(SOL_HEADER_ONLY_I_)
+	#define SOL_BUILD_I_ SOL_DEFAULT_OFF
+#else
+	#define SOL_BUILD_I_ SOL_DEFAULT_ON
+#endif
 
 #if defined(SOL_UNITY_BUILD)
 	#if (SOL_UNITY_BUILD != 0)
@@ -100,7 +102,7 @@
 					#define SOL_API_LINKAGE_I_ __declspec(dllexport)
 				#endif
 			#else
-				#if SOL_IS_ON(SOL_PLATFORM_GCC_I_)
+				#if SOL_IS_ON(SOL_COMPILER_GCC_I_)
 					#define SOL_API_LINKAGE_I_ __attribute__((dllimport))
 				#else
 					#define SOL_API_LINKAGE_I_ __declspec(dllimport)
@@ -151,6 +153,78 @@
 	#define SOL_INTERNAL_FUNC_DEF_I_ SOL_INTERNAL_FUNC_DEF
 #else
 	#define SOL_INTERNAL_FUNC_DEF_I_ SOL_API_LINKAGE_I_
+#endif
+
+#if defined(SOL_FUNC_DECL)
+	#define SOL_FUNC_DECL_I_ SOL_FUNC_DECL
+#elif SOL_IS_ON(SOL_HEADER_ONLY_I_)
+	#define SOL_FUNC_DECL_I_ 
+#elif SOL_IS_ON(SOL_DLL_I_)
+	#if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
+		#if SOL_IS_ON(SOL_BUILD_I_)
+			#define SOL_FUNC_DECL_I_ extern __declspec(dllexport)
+		#else
+			#define SOL_FUNC_DECL_I_ extern __declspec(dllimport)
+		#endif
+	#elif SOL_IS_ON(SOL_COMPILER_GCC_I_) || SOL_IS_ON(SOL_COMPILER_CLANG_I_)
+		#define SOL_FUNC_DECL_I_ extern __attribute__((visibility("default")))
+	#else
+		#define SOL_FUNC_DECL_I_ extern
+	#endif
+#endif
+
+#if defined(SOL_FUNC_DEFN)
+	#define SOL_FUNC_DEFN_I_ SOL_FUNC_DEFN
+#elif SOL_IS_ON(SOL_HEADER_ONLY_I_)
+	#define SOL_FUNC_DEFN_I_ inline
+#elif SOL_IS_ON(SOL_DLL_I_)
+	#if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
+		#if SOL_IS_ON(SOL_BUILD_I_)
+			#define SOL_FUNC_DEFN_I_ __declspec(dllexport)
+		#else
+			#define SOL_FUNC_DEFN_I_ __declspec(dllimport)
+		#endif
+	#elif SOL_IS_ON(SOL_COMPILER_GCC_I_) || SOL_IS_ON(SOL_COMPILER_CLANG_I_)
+		#define SOL_FUNC_DEFN_I_ __attribute__((visibility("default")))
+	#else
+		#define SOL_FUNC_DEFN_I_
+	#endif
+#endif
+
+#if defined(SOL_HIDDEN_FUNC_DECL)
+	#define SOL_HIDDEN_FUNC_DECL_I_ SOL_HIDDEN_FUNC_DECL
+#elif SOL_IS_ON(SOL_HEADER_ONLY_I_)
+	#define SOL_HIDDEN_FUNC_DECL_I_ 
+#elif SOL_IS_ON(SOL_DLL_I_)
+	#if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
+		#if SOL_IS_ON(SOL_BUILD_I_)
+			#define SOL_HIDDEN_FUNC_DECL_I_ extern __declspec(dllexport)
+		#else
+			#define SOL_HIDDEN_FUNC_DECL_I_ extern __declspec(dllimport)
+		#endif
+	#elif SOL_IS_ON(SOL_COMPILER_GCC_I_) || SOL_IS_ON(SOL_COMPILER_CLANG_I_)
+		#define SOL_HIDDEN_FUNC_DECL_I_ extern __attribute__((visibility("default")))
+	#else
+		#define SOL_HIDDEN_FUNC_DECL_I_ extern
+	#endif
+#endif
+
+#if defined(SOL_HIDDEN_FUNC_DEFN)
+	#define SOL_HIDDEN_FUNC_DEFN_I_ SOL_HIDDEN_FUNC_DEFN
+#elif SOL_IS_ON(SOL_HEADER_ONLY_I_)
+	#define SOL_HIDDEN_FUNC_DEFN_I_ inline
+#elif SOL_IS_ON(SOL_DLL_I_)
+	#if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
+		#if SOL_IS_ON(SOL_BUILD_I_)
+			#define SOL_HIDDEN_FUNC_DEFN_I_ 
+		#else
+			#define SOL_HIDDEN_FUNC_DEFN_I_ 
+		#endif
+	#elif SOL_IS_ON(SOL_COMPILER_GCC_I_) || SOL_IS_ON(SOL_COMPILER_CLANG_I_)
+		#define SOL_HIDDEN_FUNC_DEFN_I_ __attribute__((visibility("hidden")))
+	#else
+		#define SOL_HIDDEN_FUNC_DEFN_I_
+	#endif
 #endif
 
 // clang-format on 

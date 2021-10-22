@@ -273,15 +273,15 @@ namespace sol { namespace meta {
 	namespace meta_detail {
 
 		template <typename T, typename = void>
-		struct is_callable : std::is_function<std::remove_pointer_t<T>> { };
+		struct is_invocable : std::is_function<std::remove_pointer_t<T>> { };
 
 		template <typename T>
-		struct is_callable<T,
+		struct is_invocable<T,
 			std::enable_if_t<std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value
 			     && std::is_same<decltype(void(&T::operator())), void>::value>> { };
 
 		template <typename T>
-		struct is_callable<T,
+		struct is_invocable<T,
 			std::enable_if_t<!std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value
 			     && std::is_destructible<unqualified_t<T>>::value>> {
 			struct F {
@@ -301,7 +301,7 @@ namespace sol { namespace meta {
 		};
 
 		template <typename T>
-		struct is_callable<T,
+		struct is_invocable<T,
 			std::enable_if_t<!std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value
 			     && !std::is_destructible<unqualified_t<T>>::value>> {
 			struct F {
@@ -551,10 +551,10 @@ namespace sol { namespace meta {
 	class supports_to_string_member : public meta::boolean<meta_detail::has_to_string_test<meta_detail::non_void_t<T>>::value> { };
 
 	template <typename T>
-	using is_callable = boolean<meta_detail::is_callable<T>::value>;
+	using is_invocable = boolean<meta_detail::is_invocable<T>::value>;
 
 	template <typename T>
-	constexpr inline bool is_callable_v = is_callable<T>::value;
+	constexpr inline bool is_invocable_v = is_invocable<T>::value;
 
 	template <typename T>
 	struct has_begin_end : decltype(meta_detail::has_begin_end_impl::test<T>(0)) { };

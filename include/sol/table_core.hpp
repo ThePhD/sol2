@@ -542,9 +542,10 @@ namespace sol {
 		template <bool read_only = true, typename... Args>
 		table new_enum(const string_view& name, Args&&... args) {
 			table target = create_with(std::forward<Args>(args)...);
-			if (read_only) {
-				table x = create_with(
-				     meta_function::new_index, detail::fail_on_newindex, meta_function::index, target, meta_function::pairs, detail::enum_pairs_function);
+			if constexpr (read_only) {
+				// Need to create a special iterator to handle this
+				table x
+				     = create_with(meta_function::new_index, detail::fail_on_newindex, meta_function::index, target, meta_function::pairs, stack::stack_detail::readonly_pairs);
 				table shim = create_named(name, metatable_key, x);
 				return shim;
 			}

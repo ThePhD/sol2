@@ -154,25 +154,64 @@
 #define SOL_PLATFORM_ARM32_I_ SOL_OFF
 #define SOL_PLATFORM_ARM64_I_ SOL_OFF
 
-#if defined(_WIN32)
-	#define SOL_PLATFORM_WINDOWS_I_ SOL_ON
+#if defined(SOL_PLATFORM_WINDOWS)
+	#if (SOL_PLATFORM_WINDOWS != 0)
+		#define SOL_PLATFORM_WINDOWS_I_ SOL_ON
+	#else
+		#define SOL_PLATFORM_WINDOWS_I_ SOL_OFF
+	#endif
+#elif defined(_WIN32)
+	#define SOL_PLATFORM_WINDOWS_I_ SOL_DEFAULT_ON
 #else
-	#define SOL_PLATFORM_WINDOWS_I_ SOL_OFF
+	#define SOL_PLATFORM_WINDOWS_I_ SOL_DEFAULT_OFF
 #endif
-#if defined(__APPLE__)
-	#define SOL_PLATFORM_APPLE_I_ SOL_ON
+
+#if defined(SOL_PLATFORM_CYGWIN)
+	#if (SOL_PLATFORM_CYGWIN != 0)
+		#define SOL_PLATFORM_CYGWIN_I_ SOL_ON
+	#else
+		#define SOL_PLATFORM_CYGWIN_I_ SOL_ON
+	#endif
+#elif defined(__CYGWIN__)
+	#define SOL_PLATFORM_CYGWIN_I_ SOL_DEFAULT_ON
 #else
-	#define SOL_PLATFORM_APPLE_I_ SOL_OFF
+	#define SOL_PLATFORM_CYGWIN_I_ SOL_DEFAULT_OFF
 #endif
-#if defined(__unix__)
-	#define SOL_PLATFORM_UNIXLIKE_I_ SOL_ON
+
+#if defined(SOL_PLATFORM_APPLE)
+	#if (SOL_PLATFORM_APPLE != 0)
+		#define SOL_PLATFORM_APPLE_I_ SOL_ON
+	#else
+		#define SOL_PLATFORM_APPLE_I_ SOL_OFF
+	#endif
+#elif defined(__APPLE__)
+	#define SOL_PLATFORM_APPLE_I_ SOL_DEFAULT_ON
 #else
-	#define SOL_PLATFORM_UNIXLIKE_I_ SOL_OFF
+	#define SOL_PLATFORM_APPLE_I_ SOL_DEFAULT_OFF
 #endif
-#if defined(__linux__)
-	#define SOL_PLATFORM_LINUXLIKE_I_ SOL_ON
+
+#if defined(SOL_PLATFORM_UNIX)
+	#if (SOL_PLATFORM_UNIX != 0)
+		#define SOL_PLATFORM_UNIXLIKE_I_ SOL_ON
+	#else
+		#define SOL_PLATFORM_UNIXLIKE_I_ SOL_OFF
+	#endif
+#elif defined(__unix__)
+	#define SOL_PLATFORM_UNIXLIKE_I_ SOL_DEFAUKT_ON
 #else
-	#define SOL_PLATFORM_LINUXLIKE_I_ SOL_OFF
+	#define SOL_PLATFORM_UNIXLIKE_I_ SOL_DEFAULT_OFF
+#endif
+
+#if defined(SOL_PLATFORM_LINUX)
+	#if (SOL_PLATFORM_LINUX != 0)
+		#define SOL_PLATFORM_LINUXLIKE_I_ SOL_ON
+	#else
+		#define SOL_PLATFORM_LINUXLIKE_I_ SOL_OFF
+	#endif
+#elif defined(__LINUX__)
+	#define SOL_PLATFORM_LINUXLIKE_I_ SOL_DEFAUKT_ON
+#else
+	#define SOL_PLATFORM_LINUXLIKE_I_ SOL_DEFAULT_OFF
 #endif
 
 #define SOL_PLATFORM_APPLE_IPHONE_I_ SOL_OFF
@@ -780,112 +819,6 @@
 	#define SOL_USER_M_ASSERT_I_ SOL_ON
 #else
 	#define SOL_USER_M_ASSERT_I_ SOL_DEFAULT_OFF
-#endif
-
-#if defined(SOL_HEADER_ONLY)
-	#if (SOL_HEADER_ONLY != 0)
-		#define SOL_HEADER_ONLY_I_ SOL_ON
-	#else
-		#define SOL_HEADER_ONLY_I_ SOL_OFF
-	#endif
-#else
-	#define SOL_HEADER_ONLY_I_ SOL_DEFAULT_ON
-#endif
-
-#if defined(SOL_BUILD)
-	#if (SOL_BUILD != 0)
-		#define SOL_BUILD_I_ SOL_ON
-	#else
-		#define SOL_BUILD_I_ SOL_OFF
-	#endif
-#elif SOL_IS_ON(SOL_HEADER_ONLY_I_)
-	#define SOL_BUILD_I_ SOL_DEFAULT_OFF
-#else
-	#define SOL_BUILD_I_ SOL_DEFAULT_ON
-#endif
-
-#if defined(SOL_DLL)
-	#if (SOL_DLL != 0)
-		#define SOL_DLL_I_ SOL_ON
-	#else
-		#define SOL_DLL_I_ SOL_OFF
-	#endif
-#elif SOL_IS_ON(SOL_HEADER_ONLY_I_)
-	#define SOL_DLL_I_ SOL_DEFAULT_OFF
-#else
-	#define SOL_DLL_I_ SOL_DEFAULT_OFF
-#endif
-
-#if defined(SOL_FUNC_DECL)
-	#define SOL_FUNC_DECL_I_ SOL_FUNC_DECL
-#elif SOL_IS_ON(SOL_HEADER_ONLY_I_)
-	#define SOL_FUNC_DECL_I_ 
-#elif SOL_IS_ON(SOL_DLL_I_)
-	#if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
-		#if SOL_IS_ON(SOL_BUILD_I_)
-			#define SOL_FUNC_DECL_I_ extern __declspec(dllexport)
-		#else
-			#define SOL_FUNC_DECL_I_ extern __declspec(dllimport)
-		#endif
-	#elif SOL_IS_ON(SOL_COMPILER_GCC_I_) || SOL_IS_ON(SOL_COMPILER_CLANG_I_)
-		#define SOL_FUNC_DECL_I_ extern __attribute__((visibility("default")))
-	#else
-		#define SOL_FUNC_DECL_I_ extern
-	#endif
-#endif
-
-#if defined(SOL_FUNC_DEFN)
-	#define SOL_FUNC_DEFN_I_ SOL_FUNC_DEFN
-#elif SOL_IS_ON(SOL_HEADER_ONLY_I_)
-	#define SOL_FUNC_DEFN_I_ inline
-#elif SOL_IS_ON(SOL_DLL_I_)
-	#if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
-		#if SOL_IS_ON(SOL_BUILD_I_)
-			#define SOL_FUNC_DEFN_I_ __declspec(dllexport)
-		#else
-			#define SOL_FUNC_DEFN_I_ __declspec(dllimport)
-		#endif
-	#elif SOL_IS_ON(SOL_COMPILER_GCC_I_) || SOL_IS_ON(SOL_COMPILER_CLANG_I_)
-		#define SOL_FUNC_DEFN_I_ __attribute__((visibility("default")))
-	#else
-		#define SOL_FUNC_DEFN_I_
-	#endif
-#endif
-
-#if defined(SOL_HIDDEN_FUNC_DECL)
-	#define SOL_HIDDEN_FUNC_DECL_I_ SOL_HIDDEN_FUNC_DECL
-#elif SOL_IS_ON(SOL_HEADER_ONLY_I_)
-	#define SOL_HIDDEN_FUNC_DECL_I_ 
-#elif SOL_IS_ON(SOL_DLL_I_)
-	#if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
-		#if SOL_IS_ON(SOL_BUILD_I_)
-			#define SOL_HIDDEN_FUNC_DECL_I_ extern __declspec(dllexport)
-		#else
-			#define SOL_HIDDEN_FUNC_DECL_I_ extern __declspec(dllimport)
-		#endif
-	#elif SOL_IS_ON(SOL_COMPILER_GCC_I_) || SOL_IS_ON(SOL_COMPILER_CLANG_I_)
-		#define SOL_HIDDEN_FUNC_DECL_I_ extern __attribute__((visibility("default")))
-	#else
-		#define SOL_HIDDEN_FUNC_DECL_I_ extern
-	#endif
-#endif
-
-#if defined(SOL_HIDDEN_FUNC_DEFN)
-	#define SOL_HIDDEN_FUNC_DEFN_I_ SOL_HIDDEN_FUNC_DEFN
-#elif SOL_IS_ON(SOL_HEADER_ONLY_I_)
-	#define SOL_HIDDEN_FUNC_DEFN_I_ inline
-#elif SOL_IS_ON(SOL_DLL_I_)
-	#if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
-		#if SOL_IS_ON(SOL_BUILD_I_)
-			#define SOL_HIDDEN_FUNC_DEFN_I_ 
-		#else
-			#define SOL_HIDDEN_FUNC_DEFN_I_ 
-		#endif
-	#elif SOL_IS_ON(SOL_COMPILER_GCC_I_) || SOL_IS_ON(SOL_COMPILER_CLANG_I_)
-		#define SOL_HIDDEN_FUNC_DEFN_I_ __attribute__((visibility("hidden")))
-	#else
-		#define SOL_HIDDEN_FUNC_DEFN_I_
-	#endif
 #endif
 
 #include <sol/prologue.hpp>

@@ -302,6 +302,11 @@ namespace sol {
 			}
 		}
 
+		void abandon () noexcept {
+			this->m_error_handler.abandon();
+			base_t::abandon();
+		}
+
 	private:
 		handler_t m_error_handler;
 

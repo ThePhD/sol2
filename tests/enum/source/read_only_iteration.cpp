@@ -30,21 +30,21 @@ inline namespace sol2_tests_enum_read_only_iteration {
 }
 
 
-TEST_CASE("environments/sanboxing", "see if environments on functions are working properly") {
+TEST_CASE("enum/read-only-iteration", "make sure iteration for read only tables works properly") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
-	constexpr bool ro = true;
-	lua.new_enum<color, ro>("color", { { "red", color::red }, { "blue", color::blue } });
-	auto script = R"lua(
-		print( "start" )
-		for k, v in pairs( color ) do
-			print( tostring(k) .. ": " .. tostring(v) )
-		end
-		print( "end" )
-	)lua";
-	auto result = lua.safe_script(script, sol::script_pass_on_error);
-	sol::optional<sol::error> maybe_error = result;
-	REQUIRE(result.valid());
-	REQUIRE(result.status() == sol::call_status::ok);
-	REQUIRE_FALSE(maybe_error.has_value());
+#define TABLE_ENTRIES() "FIRST", 1, "SECOND", 2, "THIRD", 3, "NOT-FOURTH", 5
+	lua.create_named_table("Check", TABLE_ENTRIES());
+	lua.new_enum("Enum", TABLE_ENTRIES());
+#undef TABLE_ENTRIES
+
+	SECTION("without global next function") {
+		sol::optional<sol::error> maybe_result = lua.safe_script("for k, v in pairs(Enum) do assert(Check[k] == v) end", sol::script_pass_on_error);
+		REQUIRE_FALSE(maybe_result.has_value());
+	}
+	SECTION("with global next function") {
+		lua.open_libraries(sol::lib::table);
+		sol::optional<sol::error> maybe_result = lua.safe_script("for k, v in pairs(Enum) do assert(Check[k] == v) end", sol::script_pass_on_error);
+		REQUIRE_FALSE(maybe_result.has_value());
+	}
 }

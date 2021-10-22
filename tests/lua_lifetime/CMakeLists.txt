@@ -20,13 +20,15 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# # # # sol2 tests - enum
+# # # # sol2 tests - environment
 
 file(GLOB sources
 	LIST_DIRECTORIES FALSE
 	CONFIGURE_DEPENDS
 	source/*.cpp)
 
-sol2_create_basic_test(sol2.tests.enum sol2::sol2 ${sources})
-target_compile_definitions(sol2.tests.enum PRIVATE
+sol2_create_basic_test(sol2.tests.lua_lifetime sol2::sol2 ${sources})
+sol2_create_basic_test(sol2.tests.lua_lifetime.SOL_ALL_SAFETIES_ON sol2::sol2 ${sources})
+target_compile_definitions(sol2.tests.lua_lifetime.SOL_ALL_SAFETIES_ON
+	PRIVATE
 	SOL_ALL_SAFETIES_ON=1)
