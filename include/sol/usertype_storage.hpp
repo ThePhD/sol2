@@ -66,11 +66,11 @@ namespace sol { namespace u_detail {
 	template <typename K, typename Fq, typename T = void>
 	struct binding : binding_base {
 		using uF = meta::unqualified_t<Fq>;
-		using F = meta::conditional_t<meta::is_c_str_of_v<uF, char>
+		using F = meta::conditional_t<meta::is_c_str_or_string_of_v<uF, char>
 #if SOL_IS_ON(SOL_CHAR8_T_I_)
-			     || meta::is_c_str_of_v<uF, char8_t>
+			     || meta::is_c_str_or_string_of_v<uF, char8_t>
 #endif
-			     || meta::is_c_str_of_v<uF, char16_t> || meta::is_c_str_of_v<uF, char32_t> || meta::is_c_str_of_v<uF, wchar_t>,
+			     || meta::is_c_str_or_string_of_v<uF, char16_t> || meta::is_c_str_or_string_of_v<uF, char32_t> || meta::is_c_str_or_string_of_v<uF, wchar_t>,
 			std::add_pointer_t<std::add_const_t<std::remove_all_extents_t<Fq>>>, std::decay_t<Fq>>;
 		F data_;
 

@@ -678,8 +678,7 @@ namespace sol { namespace meta {
 	struct is_pair<std::pair<T1, T2>> : std::true_type { };
 
 	template <typename T, typename Char>
-	using is_c_str_of = any<std::is_same<T, const Char*>, std::is_same<T, Char const* const>, std::is_same<T, Char*>, is_string_of<T, Char>,
-		is_string_literal_array_of<T, Char>>;
+	using is_c_str_of = any<std::is_same<T, const Char*>, std::is_same<T, Char const* const>, std::is_same<T, Char*>, is_string_literal_array_of<T, Char>>;
 
 	template <typename T, typename Char>
 	constexpr inline bool is_c_str_of_v = is_c_str_of<T, Char>::value;
@@ -689,6 +688,18 @@ namespace sol { namespace meta {
 
 	template <typename T>
 	constexpr inline bool is_c_str_v = is_c_str<T>::value;
+
+	template <typename T, typename Char>
+	using is_c_str_or_string_of = any<is_c_str_of<T, Char>, is_string_of<T, Char>>;
+
+	template <typename T, typename Char>
+	constexpr inline bool is_c_str_or_string_of_v = is_c_str_or_string_of<T, Char>::value;
+
+	template <typename T>
+	using is_c_str_or_string = is_c_str_or_string_of<T, char>;
+
+	template <typename T>
+	constexpr inline bool is_c_str_or_string_v = is_c_str<T>::value;
 
 	template <typename T>
 	struct is_move_only : all<neg<std::is_reference<T>>, neg<std::is_copy_constructible<unqualified_t<T>>>, std::is_move_constructible<unqualified_t<T>>> { };

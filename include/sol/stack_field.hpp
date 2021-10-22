@@ -33,11 +33,11 @@ namespace sol { namespace stack {
 
 	namespace stack_detail {
 		template <typename T, bool global, bool raw>
-		inline constexpr bool is_get_direct_tableless_v = (global && !raw && meta::is_c_str_v<T>);
+		inline constexpr bool is_get_direct_tableless_v = (global && !raw && meta::is_c_str_or_string_v<T>);
 
 		template <typename T, bool global, bool raw>
 		inline constexpr bool is_get_direct_v = (is_get_direct_tableless_v<T, global, raw>) // cf-hack
-			|| (!global && !raw && (meta::is_c_str_v<T> || meta::is_string_of_v<T, char>)) // cf-hack
+			|| (!global && !raw && (meta::is_c_str_or_string_v<T> || meta::is_string_of_v<T, char>)) // cf-hack
 			|| (!global && raw && (std::is_integral_v<T> && !std::is_same_v<T, bool>))
 #if SOL_LUA_VERSION_I_ >= 503
 			|| (!global && !raw && (std::is_integral_v<T> && !std::is_same_v<T, bool>))
@@ -48,11 +48,11 @@ namespace sol { namespace stack {
 			;
 
 		template <typename T, bool global, bool raw>
-		inline constexpr bool is_set_direct_tableless_v = (global && !raw && meta::is_c_str_v<T>);
+		inline constexpr bool is_set_direct_tableless_v = (global && !raw && meta::is_c_str_or_string_v<T>);
 
 		template <typename T, bool global, bool raw>
 		inline constexpr bool is_set_direct_v = (is_set_direct_tableless_v<T, global, raw>) // cf-hack
-			|| (!global && !raw && (meta::is_c_str_v<T> || meta::is_string_of_v<T, char>)) // cf-hack
+			|| (!global && !raw && (meta::is_c_str_or_string_v<T> || meta::is_string_of_v<T, char>)) // cf-hack
 			|| (!global && raw && (std::is_integral_v<T> && !std::is_same_v<T, bool>))     // cf-hack
 #if SOL_LUA_VERSION_I_ >= 503
 			|| (!global && !raw && (std::is_integral_v<T> && !std::is_same_v<T, bool>))
@@ -107,7 +107,7 @@ namespace sol { namespace stack {
 				}
 			}
 			else {
-				if constexpr (meta::is_c_str_v<T>) {
+				if constexpr (meta::is_c_str_or_string_v<T>) {
 					if constexpr (global) {
 						(void)tableindex;
 						lua_getglobal(L, &key[0]);
@@ -212,7 +212,7 @@ namespace sol { namespace stack {
 				}
 			}
 			else {
-				if constexpr (meta::is_c_str_v<T> || meta::is_string_of_v<T, char>) {
+				if constexpr (meta::is_c_str_v<T>) {
 					if constexpr (global) {
 						push(L, std::forward<Value>(value));
 						lua_setglobal(L, &key[0]);

@@ -28,6 +28,7 @@
 
 #include <sol/stack.hpp>
 #include <sol/stack_reference.hpp>
+#include <sol/assert.hpp>
 
 namespace sol { namespace stack { namespace stack_detail {
 
