@@ -50,28 +50,3 @@ include(CTest)
 include(CheckCompilerDiagnostic)
 include(CheckCompilerFlag)
 include(FindVersion)
-
-if (sol2-is-top-level-project)
-	# # Check environment/prepare generator expressions
-	# Basic/Normal flags
-	check_compiler_flag(disable-permissive MSVC /permissive- GCC -pedantic)
-	check_compiler_flag(utf8-literal-encoding MSVC /execution-charset:utf-8 GCC -fexec-charset=utf-8)
-	check_compiler_flag(utf8-source-encoding MSVC /source-charset:utf-8 GCC -finput-charset=utf-8)
-	check_compiler_flag(extra-constexpr-depth MSVC /constexpr:depth2147483647 GCC -fconstexpr-depth=2147483647 CLANG -fconstexpr-depth=2147483647)
-	check_compiler_flag(extra-constexpr-steps MSVC /constexpr:steps2147483647 GCC -fconstexpr-ops-limit=2147483647 CLANG -fconstexpr-steps=2147483647)
-	check_compiler_flag(template-debugging-mode GCC -ftemplate-backtrace-limit=0)
-	check_compiler_flag(big-obj MSVC /bigobj)
-	# Overall warning flags
-	check_compiler_flag(pedantic GCC -pedantic)
-	check_compiler_flag(warn-pedantic GCC -Wpedantic)
-	check_compiler_flag(warn-all MSVC /W4 GCC -Wall)
-	check_compiler_flag(warn-extra GCC -Wextra)
-	check_compiler_flag(warn-errors MSVC /WX GCC -Werror)
-	# Individual warnings/errors
-	check_compiler_diagnostic(unknown-warning)
-	check_compiler_diagnostic(unknown-warning-option)
-	check_compiler_diagnostic(microsoft-cast)
-	check_compiler_diagnostic(noexcept-type)
-	check_compiler_diagnostic(unreachable-code MSVC 4702)
-	check_compiler_diagnostic(padding-from-alignment MSVC 4324)
-endif()
