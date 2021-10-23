@@ -11,9 +11,18 @@ extern unsigned int regression_1095();
 extern unsigned int regression_1096();
 extern unsigned int regression_1149();
 extern unsigned int regression_1192();
+extern unsigned int regression_1211();
 
-static f_ptr* const regression_tests_regressions[]
-     = { &regression_1008, &regression_1000, &regression_1067, &regression_1072, &regression_1087, &regression_1095, &regression_1096, &regression_1149, &regression_1192 };
+static f_ptr* const regression_tests_regressions[] = { &regression_1008,
+	&regression_1000,
+	&regression_1067,
+	&regression_1072,
+	&regression_1087,
+	&regression_1095,
+	&regression_1096,
+	&regression_1149,
+	&regression_1192,
+	&regression_1211 };
 static const int regression_tests_sizeof_regressions = sizeof(regression_tests_regressions) / sizeof(regression_tests_regressions[0]);
 
 int trampoline(f_ptr* f) {

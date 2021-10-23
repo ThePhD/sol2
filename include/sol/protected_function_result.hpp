@@ -206,6 +206,8 @@ namespace sol {
 			err = call_status::runtime;
 		}
 		~protected_function_result() {
+			if (L == nullptr)
+				return;
 			stack::remove(L, index, popcount);
 		}
 	};

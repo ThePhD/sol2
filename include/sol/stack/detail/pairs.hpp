@@ -42,7 +42,8 @@ namespace sol { namespace stack { namespace stack_detail {
 			return true;
 		}
 		stack::get_field<true, false>(L_, "table");
-		if (!stack::check<table>(L_, -1)) {
+		stack::record tracking{};
+		if (!stack::loose_table_check(L_, -1, &no_panic, tracking)) {
 			return false;
 		}
 		lua_getfield(L_, -1, "next");
