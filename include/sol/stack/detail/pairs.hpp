@@ -28,9 +28,38 @@
 
 #include <sol/stack.hpp>
 #include <sol/stack_reference.hpp>
+#include <sol/protected_function.hpp>
 #include <sol/assert.hpp>
 
+#include <optional>
+
 namespace sol { namespace stack { namespace stack_detail {
+
+	inline bool maybe_push_lua_next_function(lua_State* L_) {
+		stack::get_field<true, false>(L_, "next");
+		bool is_next = stack::check<protected_function>(L_);
+		if (is_next) {
+			return true;
+		}
+		stack::get_field<true, false>(L_, "table");
+		if (!stack::check<table>(L_, -1)) {
+			return false;
+		}
+		lua_getfield(L_, -1, "next");
+		bool is_table_next_func = stack::check<protected_function>(L_, -1);
+		if (is_table_next_func) {
+			return true;
+		}
+		lua_pop(L_, 1);
+		return false;
+	}
+
+	inline std::optional<protected_function> find_lua_next_function(lua_State* L_) {
+		if (maybe_push_lua_next_function(L_)) {
+			return stack::pop<protected_function>(L_);
+		}
+		return std::nullopt;
+	}
 
 	inline int c_lua_next(lua_State* L_) noexcept {
 		stack_reference table_stack_ref(L_, raw_index(1));
@@ -45,8 +74,7 @@ namespace sol { namespace stack { namespace stack_detail {
 
 	inline int readonly_pairs(lua_State* L_) noexcept {
 		int pushed = 0;
-		stack::get_field<true, false>(L_, "next");
-		if (!stack::check<unsafe_function>(L_, -1)) {
+		if (!maybe_push_lua_next_function(L_)) {
 			// we do not have the "next" function in the global namespace
 			// from the "table" global entiry, use our own
 			pushed += stack::push(L_, &c_lua_next);

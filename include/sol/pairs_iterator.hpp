@@ -31,7 +31,7 @@
 #include <sol/table_iterator.hpp>
 #include <sol/protected_function.hpp>
 
-#include <sol/detail/pairs.hpp>
+#include <sol/stack/detail/pairs.hpp>
 
 namespace sol {
 
@@ -120,8 +120,7 @@ namespace sol {
 			}
 
 			{
-				stack::get_field<true, false>(m_L, "next");
-				auto maybe_next = stack::pop<optional<protected_function>>(m_L);
+				auto maybe_next = stack::stack_detail::find_lua_next_function(m_L);
 				if (maybe_next.has_value()) {
 					m_next_function_ref = std::move(*maybe_next);
 					m_table_ref = source_;
