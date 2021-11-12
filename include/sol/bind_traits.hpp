@@ -31,7 +31,7 @@
 namespace sol { namespace meta {
 	namespace meta_detail {
 		template <typename F>
-		using detect_deducible_signature = decltype(&F::operator(), void());
+		using detect_deducible_signature = decltype(&F::operator());
 	} // namespace meta_detail
 
 	template <typename F>
