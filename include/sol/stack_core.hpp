@@ -115,7 +115,7 @@ namespace sol {
 				// If all types are `good enough`, simply calculate alignment in case of the worst allocator
 				std::size_t worst_required_size = 0;
 				for (std::size_t ptr = 0; ptr < max_arg_alignment; ptr++) {
-					worst_required_size = std::max(worst_required_size, aligned_space_for<Args...>(ptr));
+					worst_required_size = (std::max)(worst_required_size, aligned_space_for<Args...>(ptr));
 				}
 				return worst_required_size;
 			}
