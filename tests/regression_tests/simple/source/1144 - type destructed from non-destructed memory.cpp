@@ -1,3 +1,4 @@
+#include <iostream>
 #include <sol/sol.hpp>
 
 inline namespace sol2_regression_test_1144 {
