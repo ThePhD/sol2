@@ -699,7 +699,7 @@ namespace sol { namespace meta {
 	using is_c_str_or_string = is_c_str_or_string_of<T, char>;
 
 	template <typename T>
-	constexpr inline bool is_c_str_or_string_v = is_c_str<T>::value;
+	constexpr inline bool is_c_str_or_string_v = is_c_str_or_string<T>::value;
 
 	template <typename T>
 	struct is_move_only : all<neg<std::is_reference<T>>, neg<std::is_copy_constructible<unqualified_t<T>>>, std::is_move_constructible<unqualified_t<T>>> { };

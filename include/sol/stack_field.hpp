@@ -212,7 +212,7 @@ namespace sol { namespace stack {
 				}
 			}
 			else {
-				if constexpr (meta::is_c_str_v<T>) {
+				if constexpr (meta::is_c_str_or_string_v<T>) {
 					if constexpr (global) {
 						push(L, std::forward<Value>(value));
 						lua_setglobal(L, &key[0]);
