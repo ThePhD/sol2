@@ -31,7 +31,7 @@
 namespace sol {
 	namespace detail {
 		inline void stack_fail(int, int) {
-#if SOL_IS_OFF(SOL_EXCEPTIONS_I_)
+#if SOL_IS_ON(SOL_EXCEPTIONS_I_)
 			throw error(detail::direct_error, "imbalanced stack after operation finish");
 #else
 			// Lol, what do you want, an error printout? :3c
