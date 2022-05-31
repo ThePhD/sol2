@@ -101,7 +101,7 @@ namespace itsy_bitsy {
 #pragma pack(1)
 struct flags_t {
 #else
-struct __attribute__((packed, aligned(1))) flags_t {
+struct __attribute__((packed, aligned(4))) flags_t {
 #endif
 	uint8_t C : 1;
 	uint8_t N : 1;
