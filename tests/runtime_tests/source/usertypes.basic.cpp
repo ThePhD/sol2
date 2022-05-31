@@ -289,3 +289,31 @@ TEST_CASE("usertype/const-pointer", "Make sure const pointers can be taken") {
 	REQUIRE(x == 201);
 	std::cout << "----- end of 6" << std::endl;
 }
+
+TEST_CASE("usertype/const-reference-no-collect", "Make sure const reference aren't collected") {
+
+	struct Foo {
+		bool allow_destruction = false;
+		~Foo() {
+			REQUIRE(allow_destruction);
+		}
+	};
+
+	Foo foo;
+
+	sol::state lua;
+	lua.new_usertype<Foo>("Foo");
+	lua["getFooPtr"] = [&](){ return &foo;};
+	lua["getFooRef"] = [&]() -> Foo& { return foo;};
+	lua["getFooRefConst"] = [&]() -> const Foo& { return foo;};
+	lua.safe_script("getFooPtr()");
+	//Should not collect anything.
+	lua.collect_gc();
+	lua.safe_script("getFooRef()");
+	//Should not collect anything.
+	lua.collect_gc();
+	lua.safe_script("getFooRefConst()");
+	//Should not collect anything. But it does!
+	lua.collect_gc();
+	foo.allow_destruction = true;
+}
