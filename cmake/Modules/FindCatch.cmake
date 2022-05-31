@@ -28,7 +28,7 @@ include(Common/Core)
 if (Catch_FIND_VERSION)
 	set(catch_version ${Catch_FIND_VERSION})
 else()
-	set(catch_version 2.11.1)
+	set(catch_version 2.13.8)
 endif()
 
 set(catch_lib catch_lib_${catch_version})
