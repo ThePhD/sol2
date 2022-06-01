@@ -709,8 +709,8 @@ namespace sol {
 		}
 
 		// Returns the old GC mode. Check support using the supports_gc_mode function.
-		gc_mode change_gc_mode_generational(int minor_multiplier, int major_multiplier) {
 #if SOL_LUA_VESION_I_ >= 504
+		gc_mode change_gc_mode_generational(int minor_multiplier, int major_multiplier) {
 			// "What does this shit mean?"
 			// http://www.lua.org/manual/5.4/manual.html#2.5.2
 			int old_mode = lua_gc(lua_state(), LUA_GCGEN, minor_multiplier, major_multiplier);
@@ -720,9 +720,13 @@ namespace sol {
 			else if (old_mode == LUA_GCINC) {
 				return gc_mode::incremental;
 			}
-#endif
 			return gc_mode::default_value;
 		}
+#else
+		gc_mode change_gc_mode_generational(int, int) {
+			return gc_mode::default_value;
+		}
+#endif
 
 		operator lua_State*() const {
 			return lua_state();

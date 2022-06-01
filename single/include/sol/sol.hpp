@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-11-19 21:39:26.848444 UTC
-// This header was generated with sol v3.2.3 (revision 62804667)
+// Generated 2022-06-01 18:18:07.084763 UTC
+// This header was generated with sol v3.2.3 (revision c2c8225c)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -25779,8 +25779,8 @@ namespace sol {
 		}
 
 		// Returns the old GC mode. Check support using the supports_gc_mode function.
-		gc_mode change_gc_mode_generational(int minor_multiplier, int major_multiplier) {
 #if SOL_LUA_VESION_I_ >= 504
+		gc_mode change_gc_mode_generational(int minor_multiplier, int major_multiplier) {
 			// "What does this shit mean?"
 			// http://www.lua.org/manual/5.4/manual.html#2.5.2
 			int old_mode = lua_gc(lua_state(), LUA_GCGEN, minor_multiplier, major_multiplier);
@@ -25790,9 +25790,13 @@ namespace sol {
 			else if (old_mode == LUA_GCINC) {
 				return gc_mode::incremental;
 			}
-#endif
 			return gc_mode::default_value;
 		}
+#else
+		gc_mode change_gc_mode_generational(int, int) {
+			return gc_mode::default_value;
+		}
+#endif
 
 		operator lua_State*() const {
 			return lua_state();
