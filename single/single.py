@@ -304,17 +304,17 @@ os.makedirs(single_file_dir, exist_ok=True)
 os.makedirs(forward_single_file_dir, exist_ok=True)
 os.makedirs(config_single_file_dir, exist_ok=True)
 
-with open(single_file, 'w', encoding='utf-8') as f:
+with open(single_file, 'w', encoding='utf-8', newline='\r\n') as f:
 	if not args.quiet:
 		print('writing {}...'.format(single_file))
 	f.write(result)
 
-with open(forward_single_file, 'w', encoding='utf-8') as f:
+with open(forward_single_file, 'w', encoding='utf-8', newline='\r\n') as f:
 	if not args.quiet:
 		print('writing {}...'.format(forward_single_file))
 	f.write(forward_result)
 
-with open(config_single_file, 'w', encoding='utf-8') as f:
+with open(config_single_file, 'w', encoding='utf-8', newline='\r\n') as f:
 	if not args.quiet:
 		print('writing {}...'.format(config_single_file))
 	f.write(config_result)
