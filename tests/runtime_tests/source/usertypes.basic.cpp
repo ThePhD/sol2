@@ -313,7 +313,7 @@ TEST_CASE("usertype/const-reference-no-collect", "Make sure const reference aren
 	//Should not collect anything.
 	lua.collect_gc();
 	lua.safe_script("getFooRefConst()");
-	//Should not collect anything. But it does!
+	//Should not collect anything.
 	lua.collect_gc();
 	foo.allow_destruction = true;
 }
