@@ -134,6 +134,13 @@ namespace sol {
 		}
 
 		template <typename T>
+		bool is() const {
+			typedef decltype(get<T>()) U;
+			optional<U> option = this->get<optional<U>>();
+			return option.has_value();
+		}
+
+		template <typename T>
 		decltype(auto) get() const& {
 			using idx_seq = std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>;
 			return tuple_get<T>(idx_seq());
