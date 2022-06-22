@@ -27,6 +27,8 @@
 
 #include <catch2/catch_all.hpp>
 
+#include <memory>
+
 
 TEST_CASE("usertype/member-variables", "allow table-like accessors to behave as member variables for usertype") {
 	sol::state lua;

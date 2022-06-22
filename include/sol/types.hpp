@@ -40,6 +40,7 @@
 #include <string>
 #include <string_view>
 #include <optional>
+#include <memory>
 #if SOL_IS_ON(SOL_STD_VARIANT)
 #include <variant>
 #endif // variant shenanigans (thanks, Mac OSX)
