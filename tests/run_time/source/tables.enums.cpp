@@ -23,7 +23,7 @@
 
 #include "sol_test.hpp"
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 enum weak_direction { up, down, left, right };
 enum class strong_direction { up, down, left, right };

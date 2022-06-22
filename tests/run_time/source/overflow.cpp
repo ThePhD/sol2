@@ -23,7 +23,7 @@
 
 #include "sol_test.hpp"
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 TEST_CASE("issues/stack overflow", "make sure various operations repeated don't trigger stack overflow") {
 	sol::state lua;

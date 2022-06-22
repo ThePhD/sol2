@@ -25,7 +25,7 @@
 #include "common_classes.hpp"
 
 #include <sol/sol.hpp>
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 
 TEST_CASE("plain/alignment", "test that aligned classes in certain compilers don't trigger compiler errors") {

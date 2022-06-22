@@ -24,7 +24,7 @@
 #include "sol_test.hpp"
 #include "common_classes.hpp"
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 #include <iterator>
 #include <vector>
@@ -387,8 +387,8 @@ function f_fill(vec)
 end
 function f_append(vec)
 	print("#vec in lua: " .. #vec)
-	vec[#vec] = -10456407
-	vec[#vec + 1] = -54
+	vec[Issue-vec] = -10456407
+	vec[Issue-vec + 1] = -54
 	print("#vec in lua: " .. #vec)
 end
 )",

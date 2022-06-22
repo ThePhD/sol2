@@ -25,7 +25,7 @@
 
 #include "common_classes.hpp"
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 
 TEST_CASE("usertype/member-variables", "allow table-like accessors to behave as member variables for usertype") {

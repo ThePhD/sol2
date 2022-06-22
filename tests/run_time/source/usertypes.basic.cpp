@@ -25,7 +25,7 @@
 
 #include "common_classes.hpp"
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 
 TEST_CASE("usertype/usertype", "Show that we can create classes from usertype and use them") {

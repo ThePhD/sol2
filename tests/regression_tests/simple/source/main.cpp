@@ -1,44 +1,31 @@
-#include <cstddef>
+// sol2
 
-using f_ptr = unsigned int();
+// The MIT License (MIT)
 
-extern unsigned int regression_1000();
-extern unsigned int regression_1008();
-extern unsigned int regression_1067();
-extern unsigned int regression_1072();
-extern unsigned int regression_1087();
-extern unsigned int regression_1095();
-extern unsigned int regression_1096();
-extern unsigned int regression_1149();
-extern unsigned int regression_1192();
-extern unsigned int regression_1211();
+// Copyright (c) 2013-2021 Rapptz, ThePhD and contributors
 
-static f_ptr* const regression_tests_regressions[] = { &regression_1008,
-	&regression_1000,
-	&regression_1067,
-	&regression_1072,
-	&regression_1087,
-	&regression_1095,
-	&regression_1096,
-	&regression_1149,
-	&regression_1192,
-	&regression_1211 };
-static const int regression_tests_sizeof_regressions = sizeof(regression_tests_regressions) / sizeof(regression_tests_regressions[0]);
+// Permission is hereby granted, free of charge, to any person obtaining a copy of
+// this software and associated documentation files (the "Software"), to deal in
+// the Software without restriction, including without limitation the rights to
+// use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+// the Software, and to permit persons to whom the Software is furnished to do so,
+// subject to the following conditions:
 
-int trampoline(f_ptr* f) {
-	try {
-		return f();
-	}
-	catch (...) {
-	}
-	return 1;
-}
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
 
-int main(int, char*[]) {
-	int r = 0;
-	for (std::size_t i = 0; i < regression_tests_sizeof_regressions; ++i) {
-		f_ptr* f = regression_tests_regressions[i];
-		r += static_cast<int>(trampoline(f) != 0u);
-	}
-	return r;
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+// FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+// COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+// CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+#define CATCH_CONFIG_RUNNER
+
+#include <catch2/catch_all.hpp>
+
+int main(int argc, char* argv[]) {
+	int result = Catch::Session().run(argc, argv);
+	return result;
 }

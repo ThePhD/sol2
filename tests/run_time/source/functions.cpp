@@ -24,7 +24,7 @@
 
 #include "sol_test.hpp"
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 #include <iostream>
 
@@ -447,8 +447,8 @@ TEST_CASE("functions/unsafe protected_function_result handlers",
 		present = (bool)opvalue;
 		REQUIRE_FALSE(present);
 		sol::error err = result;
-#if SOL_IS_ON(SOL_USE_LUAJIT_I_)
-#if SOL_IS_OFF(SOL_PROPAGATE_EXCEPTIONS_I_)
+#if SOL_IS_ON(SOL_USE_LUAJIT)
+#if SOL_IS_OFF(SOL_PROPAGATE_EXCEPTIONS)
 		REQUIRE(err.what() == std::string("C++ exception"));
 #else
 		REQUIRE(err.what() == handlederrormessage_s);

@@ -23,7 +23,7 @@
 
 #include "sol_test.hpp"
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 int plop_xyz(int x, int y, std::string z) {
 	INFO(x << " " << y << " " << z);

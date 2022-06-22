@@ -23,7 +23,7 @@
 
 #include "sol_test.hpp"
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 inline namespace sol2_tests_usertypes_unregister {
 	struct unregister_me {

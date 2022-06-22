@@ -26,7 +26,7 @@
 
 #include <sol/sol.hpp>
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 TEST_CASE("storage/registry construction", "ensure entries from the registry can be retrieved") {
 	const auto& code = R"(

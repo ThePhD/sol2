@@ -24,7 +24,7 @@
 #include "sol_test.hpp"
 #include "common_classes.hpp"
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 #include <iterator>
 #include <vector>

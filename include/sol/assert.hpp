@@ -28,7 +28,7 @@
 
 #include <sol/forward.hpp>
 
-#if SOL_IS_ON(SOL2_CI_I_)
+#if SOL_IS_ON(SOL2_CI)
 
 struct pre_main {
 	pre_main() {
@@ -43,10 +43,10 @@ struct pre_main {
 
 // clang-format off
 
-#if SOL_IS_ON(SOL_USER_C_ASSERT_I_)
+#if SOL_IS_ON(SOL_USER_C_ASSERT)
 	#define sol_c_assert(...) SOL_C_ASSERT(__VA_ARGS__)
 #else
-	#if SOL_IS_ON(SOL_DEBUG_BUILD_I_)
+	#if SOL_IS_ON(SOL_DEBUG_BUILD)
 		#include <exception>
 		#include <iostream>
 		#include <cstdlib>
@@ -68,10 +68,10 @@ struct pre_main {
 	#endif
 #endif
 
-#if SOL_IS_ON(SOL_USER_M_ASSERT_I_)
+#if SOL_IS_ON(SOL_USER_M_ASSERT)
 	#define sol_m_assert(message, ...) SOL_M_ASSERT(message, __VA_ARGS__)
 #else
-	#if SOL_IS_ON(SOL_DEBUG_BUILD_I_)
+	#if SOL_IS_ON(SOL_DEBUG_BUILD)
 		#include <exception>
 		#include <iostream>
 		#include <cstdlib>
