@@ -525,7 +525,7 @@ namespace sol {
 			};
 
 			static auto& get_src(lua_State* L_) {
-#if SOL_IS_ON(SOL_SAFE_USERTYPE_I_)
+#if SOL_IS_ON(SOL_SAFE_USERTYPE)
 				auto p = stack::unqualified_check_get<T*>(L_, 1);
 				if (!p) {
 					luaL_error(L_,
@@ -1404,7 +1404,7 @@ namespace sol {
 
 			static auto& get_src(lua_State* L_) {
 				auto p = stack::unqualified_check_get<T*>(L_, 1);
-#if SOL_IS_ON(SOL_SAFE_USERTYPE_I_)
+#if SOL_IS_ON(SOL_SAFE_USERTYPE)
 				if (!p) {
 					luaL_error(L_,
 					     "sol: 'self' is not of type '%s' (pass 'self' as first argument with ':' or call on proper type)",

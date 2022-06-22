@@ -23,7 +23,7 @@
 
 #include "sol_test.hpp"
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 inline namespace sol2_tables_test {
 	inline int my_custom_next(lua_State* L_) noexcept {

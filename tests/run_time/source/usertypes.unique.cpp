@@ -25,7 +25,7 @@
 
 #include "common_classes.hpp"
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 inline namespace sol2_test_usertype_unique {
 	template <typename Type, typename Deleter = std::default_delete<Type>>

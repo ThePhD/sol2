@@ -32,9 +32,9 @@
 #include <sol/version.hpp>
 #include <sol/compatibility/lua_version.hpp>
 
-#if SOL_IS_ON(SOL_USE_COMPATIBILITY_LAYER_I_)
+#if SOL_IS_ON(SOL_USE_COMPATIBILITY_LAYER)
 
-#if SOL_IS_ON(SOL_USE_CXX_LUA_I_) || SOL_IS_ON(SOL_USE_CXX_LUAJIT_I_)
+#if SOL_IS_ON(SOL_USE_CXX_LUA) || SOL_IS_ON(SOL_USE_CXX_LUAJIT)
 #ifndef COMPAT53_LUA_CPP
 #define COMPAT53_LUA_CPP 1
 #endif // Build Lua Compat layer as C++

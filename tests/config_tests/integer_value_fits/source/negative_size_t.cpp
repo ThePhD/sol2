@@ -21,7 +21,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 #include <sol/sol.hpp>
 
@@ -34,8 +34,9 @@ inline namespace sol2_tests_negative_size_t {
 	}
 } // namespace sol2_tests_negative_size_t
 
-#if SOL_LUA_VERSION_I_ >= 502
 TEST_CASE("numeric/negative size_t", "handle negative integers casted to size_t values") {
+#if SOL_LUA_VERSION_I_ > 502
+	// For 5.3 and above, this can fit using the negative-cast method
 	sol::state lua;
 	lua.set_function("f", &npos_like_api);
 
@@ -46,6 +47,16 @@ TEST_CASE("numeric/negative size_t", "handle negative integers casted to size_t 
 	REQUIRE_FALSE(maybe_error.has_value());
 	size_t should_be_like_npos = lua["v"];
 	REQUIRE(should_be_like_npos == size_t(-1));
-}
+#elif SOL_LUA_VERSION_I_ <= 502
+	// For 5.2 and below, this will trigger an error if checking is on
+	sol::state lua;
+	lua.set_function("f", &npos_like_api);
 
+	auto result = lua.safe_script("v = f()", sol::script_pass_on_error);
+	sol::optional<sol::error> maybe_error = result;
+	REQUIRE_FALSE(result.valid());
+	REQUIRE(result.status() != sol::call_status::ok);
+	REQUIRE(result.status() == sol::call_status::runtime);
+	REQUIRE(maybe_error.has_value());
 #endif
+}

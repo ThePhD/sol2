@@ -67,7 +67,7 @@ namespace sol { namespace u_detail {
 	struct binding : binding_base {
 		using uF = meta::unqualified_t<Fq>;
 		using F = meta::conditional_t<meta::is_c_str_of_v<uF, char>
-#if SOL_IS_ON(SOL_CHAR8_T_I_)
+#if SOL_IS_ON(SOL_CHAR8_T)
 			     || meta::is_c_str_of_v<uF, char8_t>
 #endif
 			     || meta::is_c_str_of_v<uF, char16_t> || meta::is_c_str_of_v<uF, char32_t> || meta::is_c_str_of_v<uF, wchar_t>,
@@ -459,7 +459,7 @@ namespace sol { namespace u_detail {
 			}
 			(void)L_;
 			(void)self;
-#if SOL_IS_ON(SOL_USE_UNSAFE_BASE_LOOKUP_I_)
+#if SOL_IS_ON(SOL_USE_UNSAFE_BASE_LOOKUP)
 			usertype_storage_base& base_storage = get_usertype_storage<Base>(L_);
 			base_result = self_index_call<is_new_index, true>(bases(), L_, base_storage);
 #else

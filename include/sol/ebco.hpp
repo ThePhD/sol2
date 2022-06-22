@@ -26,6 +26,7 @@
 
 #include <type_traits>
 #include <utility>
+#include <memory>
 
 namespace sol { namespace detail {
 

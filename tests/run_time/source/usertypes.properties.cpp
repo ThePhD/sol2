@@ -31,7 +31,7 @@
 
 #include "common_classes.hpp"
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 bool something_func_true() {
 	return true;

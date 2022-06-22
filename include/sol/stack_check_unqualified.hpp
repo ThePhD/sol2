@@ -32,7 +32,7 @@
 #include <utility>
 #include <cmath>
 #include <optional>
-#if SOL_IS_ON(SOL_STD_VARIANT_I_)
+#if SOL_IS_ON(SOL_STD_VARIANT)
 #include <variant>
 #endif // variant shenanigans
 
@@ -116,7 +116,7 @@ namespace sol { namespace stack {
 			}
 			else if constexpr (meta::any_same_v<T,
 				                   char
-#if SOL_IS_ON(SOL_CHAR8_T_I_)
+#if SOL_IS_ON(SOL_CHAR8_T)
 				                   ,
 				                   char8_t
 #endif
@@ -129,7 +129,7 @@ namespace sol { namespace stack {
 				tracking.use(1);
 #if SOL_LUA_VERSION_I_ >= 503
 				// Lua 5.3 and greater checks for numeric precision
-#if SOL_IS_ON(SOL_STRINGS_ARE_NUMBERS_I_)
+#if SOL_IS_ON(SOL_STRINGS_ARE_NUMBERS)
 				// imprecise, sloppy conversions
 				int isnum = 0;
 				lua_tointegerx(L_, index, &isnum);
@@ -138,7 +138,7 @@ namespace sol { namespace stack {
 					// expected type, actual type
 					handler(L_, index, type::number, type_of(L_, index), detail::not_a_number_or_number_string_integral);
 				}
-#elif SOL_IS_ON(SOL_NUMBER_PRECISION_CHECKS_I_)
+#elif SOL_IS_ON(SOL_NUMBER_PRECISION_CHECKS)
 				// this check is precise, do not convert
 				if (lua_isinteger(L_, index) == 1) {
 					return true;
@@ -160,7 +160,7 @@ namespace sol { namespace stack {
 				return success;
 #else
 				// Lua 5.2 and below checks
-#if SOL_IS_OFF(SOL_STRINGS_ARE_NUMBERS_I_)
+#if SOL_IS_OFF(SOL_STRINGS_ARE_NUMBERS)
 				// must pre-check, because it will convert
 				type t = type_of(L_, index);
 				if (t != type::number) {
@@ -170,7 +170,7 @@ namespace sol { namespace stack {
 				}
 #endif // Do not allow strings to be numbers
 
-#if SOL_IS_ON(SOL_NUMBER_PRECISION_CHECKS_I_)
+#if SOL_IS_ON(SOL_NUMBER_PRECISION_CHECKS)
 				int isnum = 0;
 				const lua_Number v = lua_tonumberx(L_, index, &isnum);
 				const bool success = isnum != 0 && static_cast<lua_Number>(llround(v)) == v;
@@ -179,9 +179,9 @@ namespace sol { namespace stack {
 #endif // Safe numerics and number precision checking
 				if (!success) {
 					// Use defines to provide a better error message!
-#if SOL_IS_ON(SOL_STRINGS_ARE_NUMBERS_I_)
+#if SOL_IS_ON(SOL_STRINGS_ARE_NUMBERS)
 					handler(L_, index, type::number, type_of(L_, index), detail::not_a_number_or_number_string);
-#elif SOL_IS_ON(SOL_NUMBER_PRECISION_CHECKS_I_)
+#elif SOL_IS_ON(SOL_NUMBER_PRECISION_CHECKS)
 					handler(L_, index, type::number, t, detail::not_a_number_or_number_string);
 #else
 					handler(L_, index, type::number, t, detail::not_a_number);
@@ -192,7 +192,7 @@ namespace sol { namespace stack {
 			}
 			else if constexpr (std::is_floating_point_v<T> || std::is_same_v<T, lua_Number>) {
 				tracking.use(1);
-#if SOL_IS_ON(SOL_STRINGS_ARE_NUMBERS_I_)
+#if SOL_IS_ON(SOL_STRINGS_ARE_NUMBERS)
 				bool success = lua_isnumber(L_, index) == 1;
 				if (!success) {
 					// expected type, actual type
@@ -371,7 +371,7 @@ namespace sol { namespace stack {
 				}
 				return stack::unqualified_check<ValueType>(L_, index, &no_panic, tracking);
 			}
-#if SOL_IS_ON(SOL_GET_FUNCTION_POINTER_UNSAFE_I_)
+#if SOL_IS_ON(SOL_GET_FUNCTION_POINTER_UNSAFE)
 			else if constexpr (std::is_function_v<T> || (std::is_pointer_v<T> && std::is_function_v<std::remove_pointer_t<T>>)) {
 				return stack_detail::check_function_pointer<std::remove_pointer_t<T>>(L_, index, std::forward<Handler>(handler), tracking);
 			}
@@ -508,13 +508,13 @@ namespace sol { namespace stack {
 				return true;
 			}
 			else {
-#if SOL_IS_ON(SOL_USE_INTEROP_I_)
+#if SOL_IS_ON(SOL_USE_INTEROP)
 				if (stack_detail::interop_check<U>(L_, index, indextype, handler, tracking)) {
 					return true;
 				}
 #endif // interop extensibility
 				tracking.use(1);
-#if SOL_IS_ON(SOL_GET_FUNCTION_POINTER_UNSAFE_I_)
+#if SOL_IS_ON(SOL_GET_FUNCTION_POINTER_UNSAFE)
 				if (lua_iscfunction(L_, index) != 0) {
 					// a potential match...
 					return true;
@@ -539,7 +539,7 @@ namespace sol { namespace stack {
 				bool success = false;
 				bool has_derived = derive<T>::value || weak_derive<T>::value;
 				if (has_derived) {
-#if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
+#if SOL_IS_ON(SOL_SAFE_STACK_CHECK)
 					luaL_checkstack(L_, 1, detail::not_enough_stack_space_string);
 #endif // make sure stack doesn't overflow
 					auto pn = stack::pop_n(L_, 1);
@@ -595,7 +595,7 @@ namespace sol { namespace stack {
 		}
 	};
 
-#if SOL_IS_ON(SOL_STD_VARIANT_I_)
+#if SOL_IS_ON(SOL_STD_VARIANT)
 
 	template <typename... Tn>
 	struct unqualified_checker<std::variant<Tn...>, type::poly> {

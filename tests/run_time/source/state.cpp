@@ -23,7 +23,7 @@
 
 #include "sol_test.hpp"
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 #include <iostream>
 #include <fstream>

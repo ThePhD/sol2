@@ -127,7 +127,7 @@ namespace sol {
 
 		inline void* align_usertype_pointer(void* ptr) {
 			using use_align = std::integral_constant<bool,
-#if SOL_IS_OFF(SOL_ALIGN_MEMORY_I_)
+#if SOL_IS_OFF(SOL_ALIGN_MEMORY)
 			     false
 #else
 			     (std::alignment_of<void*>::value > 1)
@@ -143,7 +143,7 @@ namespace sol {
 		template <bool pre_aligned = false, bool pre_shifted = false>
 		void* align_usertype_unique_destructor(void* ptr) {
 			using use_align = std::integral_constant<bool,
-#if SOL_IS_OFF(SOL_ALIGN_MEMORY_I_)
+#if SOL_IS_OFF(SOL_ALIGN_MEMORY)
 			     false
 #else
 			     (std::alignment_of<unique_destructor>::value > 1)
@@ -165,7 +165,7 @@ namespace sol {
 		template <bool pre_aligned = false, bool pre_shifted = false>
 		void* align_usertype_unique_tag(void* ptr) {
 			using use_align = std::integral_constant<bool,
-#if SOL_IS_OFF(SOL_ALIGN_MEMORY_I_)
+#if SOL_IS_OFF(SOL_ALIGN_MEMORY)
 			     false
 #else
 			     (std::alignment_of<unique_tag>::value > 1)
@@ -187,7 +187,7 @@ namespace sol {
 		template <typename T, bool pre_aligned = false, bool pre_shifted = false>
 		void* align_usertype_unique(void* ptr) {
 			typedef std::integral_constant<bool,
-#if SOL_IS_OFF(SOL_ALIGN_MEMORY_I_)
+#if SOL_IS_OFF(SOL_ALIGN_MEMORY)
 			     false
 #else
 			     (std::alignment_of_v<T> > 1)
@@ -210,7 +210,7 @@ namespace sol {
 		template <typename T>
 		void* align_user(void* ptr) {
 			typedef std::integral_constant<bool,
-#if SOL_IS_OFF(SOL_ALIGN_MEMORY_I_)
+#if SOL_IS_OFF(SOL_ALIGN_MEMORY)
 			     false
 #else
 			     (std::alignment_of_v<T> > 1)
@@ -227,7 +227,7 @@ namespace sol {
 		template <typename T>
 		T** usertype_allocate_pointer(lua_State* L) {
 			typedef std::integral_constant<bool,
-#if SOL_IS_OFF(SOL_ALIGN_MEMORY_I_)
+#if SOL_IS_OFF(SOL_ALIGN_MEMORY)
 			     false
 #else
 			     (std::alignment_of<T*>::value > 1)
@@ -311,7 +311,7 @@ namespace sol {
 		template <typename T>
 		T* usertype_allocate(lua_State* L) {
 			typedef std::integral_constant<bool,
-#if SOL_IS_OFF(SOL_ALIGN_MEMORY_I_)
+#if SOL_IS_OFF(SOL_ALIGN_MEMORY)
 			     false
 #else
 			     (std::alignment_of<T*>::value > 1 || std::alignment_of_v<T> > 1)
@@ -352,7 +352,7 @@ namespace sol {
 		template <typename T, typename Real>
 		Real* usertype_unique_allocate(lua_State* L, T**& pref, unique_destructor*& dx, unique_tag*& id) {
 			typedef std::integral_constant<bool,
-#if SOL_IS_OFF(SOL_ALIGN_MEMORY_I_)
+#if SOL_IS_OFF(SOL_ALIGN_MEMORY)
 			     false
 #else
 			     (std::alignment_of<T*>::value > 1 || std::alignment_of<unique_tag>::value > 1 || std::alignment_of<unique_destructor>::value > 1
@@ -406,7 +406,7 @@ namespace sol {
 		template <typename T>
 		T* user_allocate(lua_State* L) {
 			typedef std::integral_constant<bool,
-#if SOL_IS_OFF(SOL_ALIGN_MEMORY_I_)
+#if SOL_IS_OFF(SOL_ALIGN_MEMORY)
 			     false
 #else
 			     (std::alignment_of_v<T> > 1)
@@ -928,7 +928,7 @@ namespace sol {
 				using use_reference_tag =
 				meta::all<
 					meta::neg<is_value_semantic_for_function<T>>
-#if SOL_IS_OFF(SOL_FUNCTION_CALL_VALUE_SEMANTICS_I_)
+#if SOL_IS_OFF(SOL_FUNCTION_CALL_VALUE_SEMANTICS)
 					, std::is_lvalue_reference<T>,
 					meta::neg<std::is_const<std::remove_reference_t<T>>>,
 					meta::neg<is_lua_primitive<meta::unqualified_t<T>>>,
@@ -1145,7 +1145,7 @@ namespace sol {
 
 		template <typename T>
 		auto unqualified_get(lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_unqualified_get<T>(L, index, tracking)) {
-#if SOL_IS_ON(SOL_SAFE_GETTER_I_)
+#if SOL_IS_ON(SOL_SAFE_GETTER)
 			static constexpr bool is_op = meta::is_optional_v<T>;
 			if constexpr (is_op) {
 				return stack_detail::unchecked_unqualified_get<T>(L, index, tracking);
@@ -1170,7 +1170,7 @@ namespace sol {
 
 		template <typename T>
 		auto get(lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_get<T>(L, index, tracking)) {
-#if SOL_IS_ON(SOL_SAFE_GETTER_I_)
+#if SOL_IS_ON(SOL_SAFE_GETTER)
 			static constexpr bool is_op = meta::is_optional_v<T>;
 			if constexpr (is_op) {
 				return stack_detail::unchecked_get<T>(L, index, tracking);

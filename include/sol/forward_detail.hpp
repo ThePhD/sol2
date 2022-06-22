@@ -32,7 +32,7 @@
 namespace sol {
 	namespace detail {
 		const bool default_safe_function_calls =
-#if SOL_IS_ON(SOL_SAFE_FUNCTION_CALLS_I_)
+#if SOL_IS_ON(SOL_SAFE_FUNCTION_CALLS)
 		     true;
 #else
 		     false;
