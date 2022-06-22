@@ -29,6 +29,7 @@
 
 #include <bitset>
 #include <unordered_map>
+#include <memory>
 
 namespace sol { namespace u_detail {
 

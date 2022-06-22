@@ -27,6 +27,8 @@
 
 #include <catch2/catch_all.hpp>
 
+#include <memory>
+
 
 TEST_CASE("usertype/usertype", "Show that we can create classes from usertype and use them") {
 	sol::state lua;
