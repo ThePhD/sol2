@@ -46,7 +46,14 @@ inline namespace sol2_regression_test_1315 {
 		return a.children;
 	}
 
-	constexpr const auto& code = R"(
+} // namespace sol2_regression_test_1315
+
+
+TEST_CASE("Test for Issue #1315 - memory keep-alive with iteration functions, using a pointer", "[sol2][regression][Issue-1315][pointer]") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base, sol::lib::coroutine);
+
+	constexpr const auto& coroutine_iteration_code = R"(
 for i=1, 100 do
 co = coroutine.create( function()
 	for child_index, child in ipairs(A.children) do
@@ -58,13 +65,6 @@ end)
 coroutine.resume(co)
 end)";
 
-} // namespace sol2_regression_test_1315
-
-
-TEST_CASE("Test for Issue #1315 - memory keep-alive with iteration functions, using a pointer", "[sol2][regression][Issue-1315][pointer]") {
-	sol::state lua;
-	lua.open_libraries(sol::lib::base, sol::lib::coroutine);
-
 	A a {};
 	for (int i = 0; i < 100; i++) {
 		a.children.push_back(i);
@@ -72,7 +72,7 @@ TEST_CASE("Test for Issue #1315 - memory keep-alive with iteration functions, us
 	
 	auto perform_action = [&lua]() {
 		// call lua code directly
-		auto result = lua.safe_script(code, sol::script_pass_on_error);
+		auto result = lua.safe_script(coroutine_iteration_code, sol::script_pass_on_error);
 		sol::optional<sol::error> maybe_err = result.get<sol::optional<sol::error>>();
 		REQUIRE(result.status() == sol::call_status::ok);
 		REQUIRE_FALSE(maybe_err.has_value());
