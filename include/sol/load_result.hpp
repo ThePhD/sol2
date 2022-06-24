@@ -39,7 +39,7 @@ namespace sol {
 		load_status err;
 
 	public:
-		load_result() noexcept = default;
+		load_result() noexcept : load_result(nullptr) {}
 		load_result(lua_State* Ls, int stackindex = -1, int retnum = 0, int popnum = 0, load_status lerr = load_status::ok) noexcept
 		: L(Ls), index(stackindex), returncount(retnum), popcount(popnum), err(lerr) {
 		}
@@ -142,7 +142,9 @@ namespace sol {
 		};
 
 		~load_result() {
-			stack::remove(L, index, popcount);
+			if (L != nullptr) {
+				stack::remove(L, index, popcount);
+			}
 		}
 	};
 } // namespace sol
