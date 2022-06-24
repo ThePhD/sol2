@@ -513,8 +513,6 @@ namespace sol { namespace stack {
 	struct unqualified_pusher<std::initializer_list<T>> {
 		static int push(lua_State* L, const std::initializer_list<T>& il) noexcept {
 			unqualified_pusher<detail::as_table_tag<std::initializer_list<T>>> p {};
-			// silence annoying VC++ warning
-			(void)p;
 			return p.push(L, il);
 		}
 	};

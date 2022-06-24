@@ -99,6 +99,11 @@ namespace sol {
 			return status() == call_status::ok || status() == call_status::yielded;
 		}
 
+#if SOL_IS_ON(SOL_COMPILER_GCC)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 		template <typename T>
 		decltype(auto) get(int index_offset = 0) const {
 			using UT = meta::unqualified_t<T>;
@@ -139,6 +144,10 @@ namespace sol {
 				}
 			}
 		}
+
+#if SOL_IS_ON(SOL_COMPILER_GCC)
+#pragma GCC diagnostic pop
+#endif
 
 		type get_type(int index_offset = 0) const noexcept {
 			return type_of(L, index + static_cast<int>(index_offset));

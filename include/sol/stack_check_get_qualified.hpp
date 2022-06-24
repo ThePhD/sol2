@@ -30,6 +30,11 @@
 
 namespace sol { namespace stack {
 
+#if SOL_IS_ON(SOL_COMPILER_GCC)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 	namespace stack_detail {
 		template <typename OptionalType, typename T, typename Handler>
 		OptionalType get_optional(lua_State* L, int index, Handler&& handler, record& tracking) {
@@ -115,6 +120,10 @@ namespace sol { namespace stack {
 			}
 		}
 	} // namespace stack_detail
+
+#if SOL_IS_ON(SOL_COMPILER_GCC)
+#pragma GCC diagnostic pop
+#endif
 
 	template <typename T, typename>
 	struct qualified_check_getter {
