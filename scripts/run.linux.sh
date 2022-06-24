@@ -37,7 +37,7 @@ echo -e "travis_fold:start:build_preparation\r"
 
 	if [ -z "${SOL2_LUA_VERSION}" ]
 	then
-		export SOL2_LUA_VERSION=5.3.5
+		export SOL2_LUA_VERSION=5.4.4
 	fi
 
 	if [ -z "${SOL2_PLATFORM}" ]

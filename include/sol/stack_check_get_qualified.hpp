@@ -70,9 +70,8 @@ namespace sol { namespace stack {
 					actual* mem = static_cast<actual*>(memory);
 					return static_cast<actual>(*mem);
 				}
-				actual r {};
 				if constexpr (!derive<element>::value) {
-					return {};
+					return OptionalType();
 				}
 				else {
 					memory = detail::align_usertype_unique_tag<true, false>(memory);
@@ -80,6 +79,7 @@ namespace sol { namespace stack {
 					memory = detail::align_usertype_unique<actual, true, false>(memory);
 					string_view ti = usertype_traits<element>::qualified_name();
 					int cast_operation;
+					actual r {};
 					if constexpr (is_actual_type_rebindable_for_v<Tu>) {
 						using rebound_actual_type = unique_usertype_rebind_actual_t<Tu, void>;
 						string_view rebind_ti = usertype_traits<rebound_actual_type>::qualified_name();
@@ -103,13 +103,13 @@ namespace sol { namespace stack {
 					default:
 						break;
 					}
-					return {};
+					return OptionalType();
 				}
 			}
 			else {
 				if (!check<T>(L, index, std::forward<Handler>(handler))) {
 					tracking.use(static_cast<int>(!lua_isnone(L, index)));
-					return {};
+					return OptionalType();
 				}
 				return OptionalType(stack_detail::unchecked_get<T>(L, index, tracking));
 			}
