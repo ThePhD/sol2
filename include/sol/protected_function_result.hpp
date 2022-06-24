@@ -54,7 +54,7 @@ namespace sol {
 		typedef std::reverse_iterator<iterator> reverse_iterator;
 		typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
-		protected_function_result() noexcept = default;
+		protected_function_result() noexcept : protected_function_result(nullptr) {}
 		protected_function_result(lua_State* Ls, int idx = -1, int retnum = 0, int popped = 0, call_status pferr = call_status::ok) noexcept
 		: L(Ls), index(idx), returncount(retnum), popcount(popped), err(pferr) {
 		}

@@ -50,7 +50,7 @@ namespace sol {
 		typedef std::reverse_iterator<iterator> reverse_iterator;
 		typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
-		unsafe_function_result() noexcept = default;
+		unsafe_function_result() noexcept : unsafe_function_result(nullptr) {}
 		unsafe_function_result(lua_State* Ls, int idx = -1, int retnum = 0) noexcept : L(Ls), index(idx), returncount(retnum) {
 		}
 
@@ -158,7 +158,9 @@ namespace sol {
 			returncount = 0;
 		}
 		~unsafe_function_result() {
-			lua_pop(L, returncount);
+			if (L != nullptr) {
+				lua_pop(L, returncount);
+			}
 		}
 	};
 
