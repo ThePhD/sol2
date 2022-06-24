@@ -30,6 +30,7 @@
 #include <sol/usertype_traits.hpp>
 #include <sol/policies.hpp>
 #include <sol/unicode.hpp>
+#include <sol/assert.hpp>
 
 #include <memory>
 #include <type_traits>
@@ -40,6 +41,8 @@
 #if SOL_IS_ON(SOL_STD_VARIANT)
 #include <variant>
 #endif // Can use variant
+
+#include <sol/debug.hpp>
 
 namespace sol { namespace stack {
 	namespace stack_detail {
@@ -141,7 +144,11 @@ namespace sol { namespace stack {
 	int push_environment_of(const T& target) {
 		lua_State* target_L = target.lua_state();
 		int target_index = absolute_index(target_L, -target.push());
-		return push_environment_of(target_L, target_index);
+		int env_count = push_environment_of(target_L, target_index);
+		sol_c_assert(env_count == 1);
+		lua_rotate(target_L, target_index, 1);
+		lua_pop(target_L, 1);
+		return env_count;
 	}
 
 	template <typename T>
@@ -316,7 +323,7 @@ namespace sol { namespace stack {
 				if (static_cast<T>(llround(static_cast<lua_Number>(value))) != value) {
 #if SOL_IS_OFF(SOL_EXCEPTIONS)
 					// Is this really worth it?
-					assert(false && "integer value will be misrepresented in lua");
+					sol_m_assert(false, "integer value will be misrepresented in lua");
 					lua_pushinteger(L, static_cast<lua_Integer>(value));
 					return 1;
 #else

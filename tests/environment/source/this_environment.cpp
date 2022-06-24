@@ -44,15 +44,21 @@ TEST_CASE("environments/this_environment", "test various situations of pulling o
 	lua["x"] = 5;
 	e["x"] = 20;
 	SECTION("from Lua script") {
-		auto result1 = lua.safe_script(code, e, sol::script_pass_on_error);
-		REQUIRE(result1.valid());
-		int value = result1;
+		int value = 0;
+		{
+			auto result1 = lua.safe_script(code, e, sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+			value = result1;
+		}
 		REQUIRE(value == 30);
 	}
 	SECTION("from C++") {
 		sol::function f = lua["f"];
-		bool env_set = e.set_on(f);
-		REQUIRE(env_set);
+		{
+			sol::stack_guard luasg_env(lua);
+			bool env_set = e.set_on(f);
+			REQUIRE(env_set);
+		}
 		int value = f(10);
 		REQUIRE(value == 30);
 	}
