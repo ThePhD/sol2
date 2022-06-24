@@ -581,23 +581,17 @@ namespace sol { namespace stack {
 					typedef typename T::value_type P;
 					typedef typename P::first_type K;
 					typedef typename P::second_type V;
-					unqualified_getter<as_table_t<T>> g;
-					// VC++ has a bad warning here: shut it up
-					(void)g;
+					unqualified_getter<as_table_t<T>> g{};
 					return g.get(types<K, nested<V>>(), L, index, tracking);
 				}
 				else {
 					typedef typename T::value_type V;
-					unqualified_getter<as_table_t<T>> g;
-					// VC++ has a bad warning here: shut it up
-					(void)g;
+					unqualified_getter<as_table_t<T>> g{};
 					return g.get(types<nested<V>>(), L, index, tracking);
 				}
 			}
 			else {
-				unqualified_getter<Tu> g;
-				// VC++ has a bad warning here: shut it up
-				(void)g;
+				unqualified_getter<Tu> g{};
 				return g.get(L, index, tracking);
 			}
 		}
@@ -933,9 +927,7 @@ namespace sol { namespace stack {
 				tracking.use(1);
 				return nullptr;
 			}
-			unqualified_getter<detail::as_value_tag<T>> g;
-			// Avoid VC++ warning
-			(void)g;
+			unqualified_getter<detail::as_value_tag<T>> g{};
 			return g.get_no_lua_nil(L, index, tracking);
 		}
 	};
@@ -943,9 +935,7 @@ namespace sol { namespace stack {
 	template <typename T>
 	struct unqualified_getter<non_null<T*>> {
 		static T* get(lua_State* L, int index, record& tracking) {
-			unqualified_getter<detail::as_value_tag<T>> g;
-			// Avoid VC++ warning
-			(void)g;
+			unqualified_getter<detail::as_value_tag<T>> g{};
 			return g.get_no_lua_nil(L, index, tracking);
 		}
 	};
@@ -953,9 +943,7 @@ namespace sol { namespace stack {
 	template <typename T>
 	struct unqualified_getter<T&> {
 		static T& get(lua_State* L, int index, record& tracking) {
-			unqualified_getter<detail::as_value_tag<T>> g;
-			// Avoid VC++ warning
-			(void)g;
+			unqualified_getter<detail::as_value_tag<T>> g{};
 			return g.get(L, index, tracking);
 		}
 	};
@@ -963,9 +951,7 @@ namespace sol { namespace stack {
 	template <typename T>
 	struct unqualified_getter<std::reference_wrapper<T>> {
 		static T& get(lua_State* L, int index, record& tracking) {
-			unqualified_getter<T&> g;
-			// Avoid VC++ warning
-			(void)g;
+			unqualified_getter<T&> g{};
 			return g.get(L, index, tracking);
 		}
 	};
@@ -978,15 +964,11 @@ namespace sol { namespace stack {
 				return stack_detail::get_function_pointer<T>(L, index, tracking);
 			}
 			else {
-				unqualified_getter<detail::as_pointer_tag<T>> g;
-				// Avoid VC++ warning
-				(void)g;
+				unqualified_getter<detail::as_pointer_tag<T>> g{};
 				return g.get(L, index, tracking);
 			}
 #else
-			unqualified_getter<detail::as_pointer_tag<T>> g;
-			// Avoid VC++ warning
-			(void)g;
+			unqualified_getter<detail::as_pointer_tag<T>> g{};
 			return g.get(L, index, tracking);
 #endif
 		}

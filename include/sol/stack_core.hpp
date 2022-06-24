@@ -709,7 +709,6 @@ namespace sol {
 				}
 				else {
 					unqualified_getter<Tu> g {};
-					(void)g;
 					return g.get(L, index, tracking);
 				}
 			}
@@ -721,7 +720,6 @@ namespace sol {
 				}
 				else {
 					qualified_getter<T> g {};
-					(void)g;
 					return g.get(L, index, tracking);
 				}
 			}
@@ -877,7 +875,6 @@ namespace sol {
 			}
 			else {
 				unqualified_pusher<Tu> p {};
-				(void)p;
 				return p.push(L, std::forward<T>(t), std::forward<Args>(args)...);
 			}
 		}
@@ -897,7 +894,6 @@ namespace sol {
 			}
 			else {
 				unqualified_pusher<Tu> p {};
-				(void)p;
 				return p.push(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 			}
 		}
@@ -983,9 +979,7 @@ namespace sol {
 				return sol_lua_check(types<Tu>(), L, index, std::forward<Handler>(handler), tracking);
 			}
 			else {
-				unqualified_checker<Tu, lua_type_of_v<Tu>> c;
-				// VC++ has a bad warning here: shut it up
-				(void)c;
+				unqualified_checker<Tu, lua_type_of_v<Tu>> c{};
 				return c.check(L, index, std::forward<Handler>(handler), tracking);
 			}
 		}
@@ -1009,9 +1003,7 @@ namespace sol {
 			}
 			else {
 				using Tu = meta::unqualified_t<T>;
-				qualified_checker<T, lua_type_of_v<Tu>> c;
-				// VC++ has a bad warning here: shut it up
-				(void)c;
+				qualified_checker<T, lua_type_of_v<Tu>> c{};
 				return c.check(L, index, std::forward<Handler>(handler), tracking);
 			}
 		}
@@ -1065,7 +1057,6 @@ namespace sol {
 			}
 			else {
 				unqualified_check_getter<Tu> cg {};
-				(void)cg;
 				return cg.get(L, index, std::forward<Handler>(handler), tracking);
 			}
 		}
@@ -1089,7 +1080,6 @@ namespace sol {
 			}
 			else {
 				qualified_check_getter<T> cg {};
-				(void)cg;
 				return cg.get(L, index, std::forward<Handler>(handler), tracking);
 			}
 		}
