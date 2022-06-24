@@ -57,12 +57,14 @@ inline namespace sol2_tests_environments_get {
 			sol::state& lua = *plua;
 			sol::environment& env_f = *penv_f;
 			sol::stack_guard luasg(lua);
-			sol::environment target_env(sol::env_key, target);
-			int test_env_f = env_f["test"];
-			int test_target_env = target_env["test"];
-			REQUIRE(test_env_f == test_target_env);
-			REQUIRE(test_env_f == 31);
-			REQUIRE(env_f == target_env);
+			{
+				sol::environment target_env(sol::env_key, target);
+				int test_env_f = env_f["test"];
+				int test_target_env = target_env["test"];
+				REQUIRE(test_env_f == test_target_env);
+				REQUIRE(test_env_f == 31);
+				REQUIRE(env_f == target_env);
+			}
 		}
 	};
 
@@ -89,20 +91,27 @@ TEST_CASE("environments/get", "Envronments can be taken out of things like Lua f
 
 	lua.open_libraries(sol::lib::base);
 
-	auto result1 = lua.safe_script("f = function() return test end", sol::script_pass_on_error);
-	REQUIRE(result1.valid());
+	{
+		auto result1 = lua.safe_script("f = function() return test end", sol::script_pass_on_error);
+		REQUIRE(result1.valid());
+	}
 	sol::function f = lua["f"];
 
 	sol::environment env_f(lua, sol::create);
 	env_f["test"] = 31;
-	bool env_f_was_set = sol::set_environment(env_f, f);
-	REQUIRE(env_f_was_set);
+	{
+		sol::stack_guard luasgf(lua);
+		bool env_f_was_set = sol::set_environment(env_f, f);
+		REQUIRE(env_f_was_set);
+	}
 
 	int result = f();
 	REQUIRE(result == 31);
 
-	auto result2 = lua.safe_script("g = function() test = 5 end", sol::script_pass_on_error);
-	REQUIRE(result2.valid());
+	{
+		auto result2 = lua.safe_script("g = function() test = 5 end", sol::script_pass_on_error);
+		REQUIRE(result2.valid());
+	}
 	sol::function g = lua["g"];
 	sol::environment env_g(lua, sol::create);
 	bool env_g_was_set = env_g.set_on(g);
@@ -116,17 +125,21 @@ TEST_CASE("environments/get", "Envronments can be taken out of things like Lua f
 	sol::object global_test = lua["test"];
 	REQUIRE(!global_test.valid());
 
-	auto result3 = lua.safe_script("h = function() end", sol::script_pass_on_error);
-	REQUIRE(result3.valid());
+	{
+		auto result3 = lua.safe_script("h = function() end", sol::script_pass_on_error);
+		REQUIRE(result3.valid());
+	}
 
 	lua.set_function("check_f_env", check_f_env(lua, env_f));
 	lua.set_function("check_g_env", check_g_env(lua, env_g));
 	lua.set_function("check_h_env", check_h_env(lua));
 
-	auto checkf = lua.safe_script("check_f_env(f)", sol::script_pass_on_error);
-	REQUIRE(checkf.valid());
-	auto checkg = lua.safe_script("check_g_env(g)", sol::script_pass_on_error);
-	REQUIRE(checkg.valid());
-	auto checkh = lua.safe_script("check_h_env(h)", sol::script_pass_on_error);
-	REQUIRE(checkh.valid());
+	{
+		auto checkf = lua.safe_script("check_f_env(f)", sol::script_pass_on_error);
+		REQUIRE(checkf.valid());
+		auto checkg = lua.safe_script("check_g_env(g)", sol::script_pass_on_error);
+		REQUIRE(checkg.valid());
+		auto checkh = lua.safe_script("check_h_env(h)", sol::script_pass_on_error);
+		REQUIRE(checkh.valid());
+	}
 }

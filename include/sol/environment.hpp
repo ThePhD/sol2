@@ -62,7 +62,7 @@ namespace sol {
 			constructor_handler handler {};
 			stack::check<env_key_t>(this->lua_state(), -1, handler);
 #endif // Safety
-			lua_pop(this->lua_state(), 2);
+			lua_pop(this->lua_state(), 1);
 		}
 		template <bool b>
 		basic_environment(env_key_t, const basic_reference<b>& extraction_target)
@@ -71,7 +71,7 @@ namespace sol {
 			constructor_handler handler {};
 			stack::check<env_key_t>(this->lua_state(), -1, handler);
 #endif // Safety
-			lua_pop(this->lua_state(), 2);
+			lua_pop(this->lua_state(), 1);
 		}
 		basic_environment(lua_State* L, int index = -1) : base_t(detail::no_safety, L, index) {
 #if SOL_IS_ON(SOL_SAFE_REFERENCES)
@@ -136,11 +136,13 @@ namespace sol {
 					const char* success = lua_setupvalue(L, target_index, 1);
 					if (success == nullptr) {
 						// left things alone on the stack, pop them off
-						lua_pop(L, 1);
+						lua_pop(L, 2);
 						return false;
 					}
+					lua_pop(L, 1);
 					return true;
 				}
+				lua_pop(L, 1);
 				return false;
 			}
 			else {
@@ -152,6 +154,7 @@ namespace sol {
 					}
 					string_view upvalue_name(maybe_upvalue_name);
 					if (upvalue_name == "_ENV") {
+						lua_pop(L, 1);
 						this->push();
 						const char* success = lua_setupvalue(L, target_index, upvalue_index);
 						if (success == nullptr) {
