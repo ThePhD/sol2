@@ -517,7 +517,7 @@ namespace sol {
 				iterator it;
 				std::size_t index;
 
-				iter(lua_State* L_, int stack_index, T& source_, iterator it_) : keep_alive(L_, stack_index), source(source_), it(std::move(it_)), index(0) {
+				iter(lua_State* L_, int stack_index, T& source_, iterator it_) : keep_alive(sol::main_thread(L_, L_), stack_index), source(source_), it(std::move(it_)), index(0) {
 				}
 
 				~iter() {
@@ -1394,10 +1394,11 @@ namespace sol {
 				T& source;
 				iterator it;
 
-				iter(lua_State* L_, int stack_index, T& source, iterator it) noexcept : keep_alive(L_, stack_index), source(source), it(std::move(it)) {
+				iter(lua_State* L_, int stack_index, T& source, iterator it) noexcept
+				: keep_alive(sol::main_thread(L_, L_), stack_index), source(source), it(std::move(it)) {
 				}
 
-				~iter () {
+				~iter() {
 
 				}
 			};
