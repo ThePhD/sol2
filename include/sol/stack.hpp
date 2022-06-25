@@ -207,7 +207,7 @@ namespace sol {
 				int push_count = push(L, std::forward<T>(arg));
 				sol_c_assert(push_count == 1);
 				std::size_t unique_index = static_cast<std::size_t>(luaL_len(L, tableindex) + 1u);
-				lua_rawseti(L, tableindex, unique_index);
+				lua_rawseti(L, tableindex, static_cast<int>(unique_index));
 			}
 
 		} // namespace stack_detail
