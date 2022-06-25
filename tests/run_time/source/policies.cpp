@@ -27,6 +27,7 @@
 
 #include <iostream>
 #include <string>
+#include <limits>
 
 TEST_CASE("policies/self", "ensure we return a direct reference to the lua userdata rather than creating a new one") {
 	struct vec2 {
