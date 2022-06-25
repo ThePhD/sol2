@@ -52,7 +52,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'sol2'
-copyright = '2021, ThePhD'
+copyright = '2022, ThePhD'
 author = 'ThePhD'
 
 # The version info for the project you're documenting, acts as replacement for
