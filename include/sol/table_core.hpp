@@ -644,7 +644,7 @@ namespace sol {
 			auto pp = stack::push_pop(*this);
 			int table_index = pp.index_of(*this);
 			lua_State* L = base_t::lua_state();
-			(void)detail::swallow { 0, (stack::set_ref(L, std::forward<Args>(args), table_index), 0)... };
+			(void)detail::swallow { 0, (stack::stack_detail::raw_table_set(L, std::forward<Args>(args), table_index), 0)... };
 			return *this;
 		}
 

@@ -34,6 +34,7 @@
 #include <sol/stack_pop.hpp>
 #include <sol/stack_field.hpp>
 #include <sol/stack_probe.hpp>
+#include <sol/assert.hpp>
 
 #include <cstring>
 #include <array>
@@ -200,11 +201,21 @@ namespace sol {
 					     argument_types_, argument_indices_, L_, start_index_, handler, tracking, std::forward<Fx>(fx_), std::forward<FxArgs>(args_)...);
 				}
 			}
+
+			template <typename T>
+			void raw_table_set(lua_State* L, T&& arg, int tableindex = -2) {
+				int push_count = push(L, std::forward<T>(arg));
+				sol_c_assert(push_count == 1);
+				std::size_t unique_index = static_cast<std::size_t>(luaL_len(L, tableindex) + 1u);
+				lua_rawseti(L, tableindex, unique_index);
+			}
+
 		} // namespace stack_detail
 
 		template <typename T>
 		int set_ref(lua_State* L, T&& arg, int tableindex = -2) {
-			push(L, std::forward<T>(arg));
+			int push_count = push(L, std::forward<T>(arg));
+			sol_c_assert(push_count == 1);
 			return luaL_ref(L, tableindex);
 		}
 
