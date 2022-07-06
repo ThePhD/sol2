@@ -171,7 +171,7 @@ kaguya -
 sol -
 
 * One of the few libraries with optional support!
-* Basically the fastest in almomst all respects: http://sol2.readthedocs.io/en/latest/benchmarks.html
+* Basically the fastest in almost all respects: http://sol2.readthedocs.io/en/latest/benchmarks.html
 * Overloading support can get messy with inheritance, see :doc:`here<api/overload>`
 * C++14/"C++1y" (-std=c++14, -std=c++1y, =std=c++1z) flags are used (available since GCC 4.9 and Clang 3.5)
 * Active issues, active individuals
