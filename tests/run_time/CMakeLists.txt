@@ -1,18 +1,18 @@
 # # # # sol2
 # The MIT License (MIT)
-# 
+#
 # Copyright (c) 2013-2022 Rapptz, ThePhD, and contributors
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
 # the Software without restriction, including without limitation the rights to
 # use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
 # the Software, and to permit persons to whom the Software is furnished to do so,
 # subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
 # FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
@@ -22,12 +22,12 @@
 
 # # # # sol2 tests - runtime tests
 
-file(GLOB sources
-	LIST_DIRECTORIES FALSE
-	CONFIGURE_DEPENDS
-	source/*.cpp)
-
-if (WAY_TOO_BUSTED_RIGHT_NOW)
+# Many are broken, so we list the working ones manually for now.
+set(sources
+	source/is_integer.cpp
+	source/main.cpp
+	source/to_string.cpp
+)
 
 sol2_create_basic_test(sol2.tests.run_time sol2::sol2 ${sources})
 target_compile_definitions(sol2.tests.run_time PRIVATE
@@ -37,5 +37,3 @@ if (SOL2_TESTS_SINGLE)
 	target_compile_definitions(sol2.single.tests.run_time PRIVATE
 		SOL_ALL_SAFETIES_ON=1)
 endif()
-
-endif() # currently borked
