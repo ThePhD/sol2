@@ -120,6 +120,7 @@ if(SOL2_ENABLE_INSTALL)
 		EXPORT sol2)
 
 	install(EXPORT sol2
+		NAMESPACE sol2::
 		FILE sol2-targets.cmake
 		DESTINATION "${CMAKE_INSTALL_DATADIR}/cmake/sol2")
 
