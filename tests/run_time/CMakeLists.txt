@@ -22,12 +22,10 @@
 
 # # # # sol2 tests - runtime tests
 
-# Many are broken, so we list the working ones manually for now.
-set(sources
-	source/is_integer.cpp
-	source/main.cpp
-	source/to_string.cpp
-)
+file(GLOB sources
+	LIST_DIRECTORIES FALSE
+	CONFIGURE_DEPENDS
+	source/*.cpp)
 
 sol2_create_basic_test(sol2.tests.run_time sol2::sol2 ${sources})
 target_compile_definitions(sol2.tests.run_time PRIVATE
