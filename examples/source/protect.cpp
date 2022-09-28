@@ -20,7 +20,7 @@ int main(int, char*[]) {
 	value = pcall(pm.gen,"wrong argument")
 	)__");
 	bool value = lua["value"];
-	sol_c_assert(!value);
+	SOL_ASSERT(!value);
 
 	return 0;
 }

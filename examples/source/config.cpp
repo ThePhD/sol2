@@ -31,9 +31,9 @@ height = 1080
 	screen.name = lua.get<std::string>("name");
 	screen.width = lua.get<int>("width");
 	screen.height = lua.get<int>("height");
-	sol_c_assert(screen.name == "Asus");
-	sol_c_assert(screen.width == 1920);
-	sol_c_assert(screen.height == 1080);
+	SOL_ASSERT(screen.name == "Asus");
+	SOL_ASSERT(screen.width == 1920);
+	SOL_ASSERT(screen.height == 1080);
 
 	std::cout << "=== config ===" << std::endl;
 	screen.print();

@@ -22,7 +22,7 @@ asserts / prerequisites
 
 You'll need to ``#include <sol/sol.hpp>`` somewhere in your code. sol is header-only, so you don't need to compile anything. However, **Lua must be compiled and available**. See the :doc:`getting started tutorial<getting-started>` for more details.
 
-Below, you will see use of a function called ``sol_c_assert``. This is an assert macro that comes with sol2 for the expression purpose of checking things; it's value is immaterial.
+Below, you will see use of a function called ``SOL_ASSERT``. This is an assert macro that comes with sol2 for the expression purpose of checking things; it's value is immaterial.
 
 
 

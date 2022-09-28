@@ -50,7 +50,7 @@ int main() {
 	sol::protected_function_result pfr = lua.safe_script(
 	     "will_throw()", &sol::script_pass_on_error);
 
-	sol_c_assert(!pfr.valid());
+	SOL_ASSERT(!pfr.valid());
 
 	sol::error err = pfr;
 	std::cout << err.what() << std::endl;

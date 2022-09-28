@@ -26,8 +26,8 @@ int main(int, char*[]) {
 	int result = func(sol::stack_count(2));
 
 	// make sure everything is clean
-	sol_c_assert(result == 22);
-	sol_c_assert(
+	SOL_ASSERT(result == 22);
+	SOL_ASSERT(
 	     lua.stack_top() == 0); // stack is empty/balanced
 
 	return 0;

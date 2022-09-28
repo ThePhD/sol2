@@ -16,11 +16,11 @@ int main(int, char**) {
 	sol::environment env_f(lua, sol::create);
 	env_f["test"] = 31;
 	bool env_f_set_success = sol::set_environment(env_f, f);
-	sol_c_assert(env_f_set_success);
+	SOL_ASSERT(env_f_set_success);
 
 	// the function returns the value from the environment table
 	int result = f();
-	sol_c_assert(result == 31);
+	SOL_ASSERT(result == 31);
 
 
 	// You can also protect from variables
@@ -30,19 +30,19 @@ int main(int, char**) {
 	sol::environment env_g(lua, sol::create);
 	bool env_g_set_success
 	     = env_g.set_on(g); // same as set_environment
-	sol_c_assert(env_g_set_success);
+	SOL_ASSERT(env_g_set_success);
 
 	g();
 	// the value can be retrieved from the env table
 	int test = env_g["test"];
-	sol_c_assert(test == 5);
+	SOL_ASSERT(test == 5);
 
 
 	// the global environment
 	// is not polluted at all, despite both functions being used
 	// and set
 	sol::object global_test = lua["test"];
-	sol_c_assert(!global_test.valid());
+	SOL_ASSERT(!global_test.valid());
 
 
 	// You can retrieve environments in C++
@@ -62,9 +62,9 @@ int main(int, char**) {
 		     int test_target_env = target_env["test"];
 		     // the environment for f the one gotten from
 		     // `target` are the same
-		     sol_c_assert(test_env_f == test_target_env);
-		     sol_c_assert(test_env_f == 31);
-		     sol_c_assert(env_f == target_env);
+		     SOL_ASSERT(test_env_f == test_target_env);
+		     SOL_ASSERT(test_env_f == 31);
+		     SOL_ASSERT(env_f == target_env);
 	     });
 	lua.set_function(
 	     "check_g_env", [&env_g](sol::function target) {
@@ -73,9 +73,9 @@ int main(int, char**) {
 		          = sol::get_environment(target);
 		     int test_env_g = env_g["test"];
 		     int test_target_env = target_env["test"];
-		     sol_c_assert(test_env_g == test_target_env);
-		     sol_c_assert(test_env_g == 5);
-		     sol_c_assert(env_g == target_env);
+		     SOL_ASSERT(test_env_g == test_target_env);
+		     SOL_ASSERT(test_env_g == 5);
+		     SOL_ASSERT(env_g == target_env);
 	     });
 
 	lua.script("check_f_env(f)");

@@ -39,9 +39,9 @@ int main() {
 	     "print(v[2])\n");
 
 	vector& v = lua["v"];
-	sol_c_assert(v[0] == 0.0);
-	sol_c_assert(v[1] == 0.0);
-	sol_c_assert(v[2] == 3.0);
+	SOL_ASSERT(v[0] == 0.0);
+	SOL_ASSERT(v[1] == 0.0);
+	SOL_ASSERT(v[2] == 3.0);
 
 	return 0;
 }

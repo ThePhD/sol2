@@ -56,7 +56,7 @@ void register_sol_stuff(lua_State* L) {
 		                  "tolua-created Player { health:"
 		               << from_tolua.getHealth() << " }"
 		               << std::endl;
-		     sol_c_assert(from_tolua.getHealth() == 4);
+		     SOL_ASSERT(from_tolua.getHealth() == 4);
 	     },
 	     [](Player& from_tolua, int second_arg) {
 		     std::cout << "calling 2-argument version with "
@@ -64,8 +64,8 @@ void register_sol_stuff(lua_State* L) {
 		               << from_tolua.getHealth()
 		               << " } and integer argument of "
 		               << second_arg << std::endl;
-		     sol_c_assert(from_tolua.getHealth() == 4);
-		     sol_c_assert(second_arg == 5);
+		     SOL_ASSERT(from_tolua.getHealth() == 4);
+		     SOL_ASSERT(second_arg == 5);
 	     });
 }
 
@@ -73,7 +73,7 @@ void check_with_sol(lua_State* L) {
 	sol::state_view lua(L);
 	Player& obj = lua["obj"];
 	(void)obj;
-	sol_c_assert(obj.getHealth() == 4);
+	SOL_ASSERT(obj.getHealth() == 4);
 }
 
 int main(int, char*[]) {

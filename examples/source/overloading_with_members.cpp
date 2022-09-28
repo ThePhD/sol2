@@ -60,7 +60,7 @@ int main() {
 
 	pup& barker = lua["barker"];
 	std::cout << barker.barks << std::endl;
-	sol_c_assert(barker.barks == 22);
+	SOL_ASSERT(barker.barks == 22);
 
 	std::cout << std::endl;
 	return 0;

@@ -42,12 +42,12 @@ int main(int, char*[]) {
 	// run a script, get the result
 	sol::optional<int> maybe_value = lua.safe_script(
 	     "return 54", sol::script_pass_on_error);
-	sol_c_assert(maybe_value.has_value());
-	sol_c_assert(*maybe_value == 54);
+	SOL_ASSERT(maybe_value.has_value());
+	SOL_ASSERT(*maybe_value == 54);
 
 	auto bad_code_result = lua.safe_script(
 	     "123 herp.derp", sol::script_pass_on_error);
-	sol_c_assert(!bad_code_result.valid());
+	SOL_ASSERT(!bad_code_result.valid());
 
 	// you can also specify a handler function, and it'll
 	// properly work here
@@ -61,7 +61,7 @@ int main(int, char*[]) {
 		     return pfr;
 	     });
 	// it did not work
-	sol_c_assert(!bad_code_result2.valid());
+	SOL_ASSERT(!bad_code_result2.valid());
 
 	// the default handler panics or throws, depending on your
 	// settings uncomment for explosions: auto bad_code_result_2

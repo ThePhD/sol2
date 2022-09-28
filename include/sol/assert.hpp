@@ -43,15 +43,15 @@ struct pre_main {
 
 // clang-format off
 
-#if SOL_IS_ON(SOL_USER_C_ASSERT)
-	#define sol_c_assert(...) SOL_C_ASSERT(__VA_ARGS__)
+#if SOL_IS_ON(SOL_USER_ASSERT)
+	#define SOL_ASSERT(...) SOL_C_ASSERT(__VA_ARGS__)
 #else
 	#if SOL_IS_ON(SOL_DEBUG_BUILD)
 		#include <exception>
 		#include <iostream>
 		#include <cstdlib>
 
-			#define sol_c_assert(...)                                                                                               \
+			#define SOL_ASSERT(...)                                                                                               \
 				do {                                                                                                               \
 					if (!(__VA_ARGS__)) {                                                                                           \
 						std::cerr << "Assertion `" #__VA_ARGS__ "` failed in " << __FILE__ << " line " << __LINE__ << std::endl; \
@@ -59,7 +59,7 @@ struct pre_main {
 					}                                                                                                             \
 				} while (false)
 	#else
-		#define sol_c_assert(...)           \
+		#define SOL_ASSERT(...)           \
 			do {                           \
 				if (false) {              \
 					(void)(__VA_ARGS__); \
@@ -68,15 +68,15 @@ struct pre_main {
 	#endif
 #endif
 
-#if SOL_IS_ON(SOL_USER_M_ASSERT)
-	#define sol_m_assert(message, ...) SOL_M_ASSERT(message, __VA_ARGS__)
+#if SOL_IS_ON(SOL_USER_ASSERT_MSG)
+	#define SOL_ASSERT_MSG(message, ...) SOL_ASSERT_MSG(message, __VA_ARGS__)
 #else
 	#if SOL_IS_ON(SOL_DEBUG_BUILD)
 		#include <exception>
 		#include <iostream>
 		#include <cstdlib>
 
-		#define sol_m_assert(message, ...)                                                                                                         \
+		#define SOL_ASSERT_MSG(message, ...)                                                                                                         \
 			do {                                                                                                                                  \
 				if (!(__VA_ARGS__)) {                                                                                                              \
 					std::cerr << "Assertion `" #__VA_ARGS__ "` failed in " << __FILE__ << " line " << __LINE__ << ": " << message << std::endl; \
@@ -84,7 +84,7 @@ struct pre_main {
 				}                                                                                                                                \
 			} while (false)
 	#else
-		#define sol_m_assert(message, ...)    \
+		#define SOL_ASSERT_MSG(message, ...)    \
 			do {                             \
 				if (false) {                \
 					(void)(__VA_ARGS__);   \

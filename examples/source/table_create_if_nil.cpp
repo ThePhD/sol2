@@ -26,7 +26,7 @@ int main(int, char*[]) {
 	auto result
 	     = lua.safe_script(code, sol::script_pass_on_error);
 	// did not work
-	sol_c_assert(!result.valid());
+	SOL_ASSERT(!result.valid());
 
 	// create values
 	create_namespace_sf(lua);
@@ -34,7 +34,7 @@ int main(int, char*[]) {
 	auto result2
 	     = lua.safe_script(code, sol::script_pass_on_error);
 	// it worked properly
-	sol_c_assert(result2.valid());
+	SOL_ASSERT(result2.valid());
 
 	std::cout << std::endl;
 

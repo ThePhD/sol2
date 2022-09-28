@@ -91,7 +91,7 @@ int main() {
 	     &reader,
 	     sol::script_pass_on_error);
 	// make sure we ran loaded and ran the code successfully
-	sol_c_assert(result.valid());
+	SOL_ASSERT(result.valid());
 
 	// note there are lua.load( ... ) variants that take a
 	// custom reader than JUST run the code, too!

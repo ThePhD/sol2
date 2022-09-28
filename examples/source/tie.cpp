@@ -18,21 +18,21 @@ int main(int, char*[]) {
 
 	sol::function woof = lua["woof"];
 	double numwoof = woof(20);
-	sol_c_assert(numwoof == 55.0);
+	SOL_ASSERT(numwoof == 55.0);
 
 	lua.script("function f () return 10, 11, 12 end");
 
 	sol::function f = lua["f"];
 	std::tuple<int, int, int> abc = f();
-	sol_c_assert(std::get<0>(abc) == 10);
-	sol_c_assert(std::get<1>(abc) == 11);
-	sol_c_assert(std::get<2>(abc) == 12);
+	SOL_ASSERT(std::get<0>(abc) == 10);
+	SOL_ASSERT(std::get<1>(abc) == 11);
+	SOL_ASSERT(std::get<2>(abc) == 12);
 	// or
 	int a, b, c;
 	sol::tie(a, b, c) = f();
-	sol_c_assert(a == 10);
-	sol_c_assert(b == 11);
-	sol_c_assert(c == 12);
+	SOL_ASSERT(a == 10);
+	SOL_ASSERT(b == 11);
+	SOL_ASSERT(c == 12);
 
 	return 0;
 }

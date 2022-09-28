@@ -44,7 +44,7 @@ s.bark = 20
 )");
 
 	some_class& s = lua["s"];
-	sol_c_assert(s.bark == 20);
+	SOL_ASSERT(s.bark == 20);
 	std::cout << "s.bark = " << s.bark << std::endl;
 
 	std::cout << std::endl;

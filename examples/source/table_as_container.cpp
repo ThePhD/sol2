@@ -27,11 +27,11 @@ int main() {
 	     "vectors = { Vector.new(3, 6), Vector.new(6, 3) }");
 	auto vectors = lua["vectors"].get<std::vector<Vector>>();
 
-	sol_c_assert(vectors[0].x == 3);
-	sol_c_assert(vectors[0].y == 6);
+	SOL_ASSERT(vectors[0].x == 3);
+	SOL_ASSERT(vectors[0].y == 6);
 
-	sol_c_assert(vectors[1].x == 6);
-	sol_c_assert(vectors[1].y == 3);
+	SOL_ASSERT(vectors[1].x == 6);
+	SOL_ASSERT(vectors[1].y == 3);
 
 	return 0;
 }

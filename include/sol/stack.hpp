@@ -205,7 +205,7 @@ namespace sol {
 			template <typename T>
 			void raw_table_set(lua_State* L, T&& arg, int tableindex = -2) {
 				int push_count = push(L, std::forward<T>(arg));
-				sol_c_assert(push_count == 1);
+				SOL_ASSERT(push_count == 1);
 				std::size_t unique_index = static_cast<std::size_t>(luaL_len(L, tableindex) + 1u);
 				lua_rawseti(L, tableindex, static_cast<int>(unique_index));
 			}
@@ -215,7 +215,7 @@ namespace sol {
 		template <typename T>
 		int set_ref(lua_State* L, T&& arg, int tableindex = -2) {
 			int push_count = push(L, std::forward<T>(arg));
-			sol_c_assert(push_count == 1);
+			SOL_ASSERT(push_count == 1);
 			return luaL_ref(L, tableindex);
 		}
 

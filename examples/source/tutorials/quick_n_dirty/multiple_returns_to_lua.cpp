@@ -14,20 +14,20 @@ int main(int, char*[]) {
 
 	std::tuple<int, int, int> result = lua["f"](100, 200, 300);
 	const std::tuple<int, int, int> expected(100, 200, 300);
-	sol_c_assert(result == expected);
+	SOL_ASSERT(result == expected);
 
 	std::tuple<int, int, std::string> result2;
 	result2 = lua["f"](100, 200, "BARK BARK BARK!");
 	const std::tuple<int, int, std::string> expected2(
 	     100, 200, "BARK BARK BARK!");
-	sol_c_assert(result2 == expected2);
+	SOL_ASSERT(result2 == expected2);
 
 	int a, b;
 	std::string c;
 	sol::tie(a, b, c) = lua["f"](100, 200, "bark");
-	sol_c_assert(a == 100);
-	sol_c_assert(b == 200);
-	sol_c_assert(c == "bark");
+	SOL_ASSERT(a == 100);
+	SOL_ASSERT(b == 200);
+	SOL_ASSERT(c == "bark");
 
 	lua.script(R"(
 		a, b, c = f(150, 250, "woofbark")

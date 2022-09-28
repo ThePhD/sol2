@@ -7,11 +7,11 @@ int main() {
 	int x = 0;
 	lua.set_function("beep", [&x] { ++x; });
 	lua.script("beep()");
-	sol_c_assert(x == 1);
+	SOL_ASSERT(x == 1);
 
 	sol::function beep = lua["beep"];
 	beep();
-	sol_c_assert(x == 2);
+	SOL_ASSERT(x == 2);
 
 	return 0;
 }

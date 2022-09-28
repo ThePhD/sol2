@@ -200,9 +200,9 @@ int main() {
 	std::cout << "N: " << N << std::endl;
 	std::cout << "D: " << D << std::endl;
 
-	sol_c_assert(C);
-	sol_c_assert(N);
-	sol_c_assert(D == 0xDF);
+	SOL_ASSERT(C);
+	SOL_ASSERT(N);
+	SOL_ASSERT(D == 0xDF);
 
 	std::cout << std::endl;
 

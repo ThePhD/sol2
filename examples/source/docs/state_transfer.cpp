@@ -44,7 +44,7 @@ int main(int, char*[]) {
 	transferred_into();
 	// check
 	int i = lua["i"];
-	sol_c_assert(i == 1);
+	SOL_ASSERT(i == 1);
 
 	return 0;
 }

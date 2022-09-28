@@ -111,7 +111,7 @@ elseif (LUA_VANILLA_VERSION MATCHES "^5\\.2")
 	set(LUA_VANILLA_LIB_SOURCES lapi.c lcode.c lctype.c ldebug.c ldo.c ldump.c 
 		lfunc.c lgc.c llex.c lmem.c lobject.c lopcodes.c lparser.c 
 		lstate.c lstring.c ltable.c ltm.c lundump.c lvm.c lzio.c
-		lauxlib.c lbaselib.c lbitlib.c lcorolib.c ldblib.c liolib.c 
+		lauxlib.c lbaselib.c lcorolib.c ldblib.c liolib.c 
 		lmathlib.c loslib.c lstrlib.c ltablib.c loadlib.c linit.c)
 	set(LUA_VANILLA_LUA_SOURCES lua.c )
 if (LUA_BUILD_LUA_COMPILER)
@@ -144,7 +144,7 @@ if (LUA_BUILD_LUA_COMPILER)
 endif()
 	set(LUA_VANILLA_GENERATE_LUA_HPP false)
 else()
-	MESSAGE(WARNING "Using Lua 5.4.1 file list for ${LUA_VERSION} version")
+	MESSAGE(WARNING "Using Lua 5.4.4 file list for ${LUA_VERSION} version")
 	set(LUA_VANILLA_LIB_SOURCES lapi.c lauxlib.c lbaselib.c lcode.c lcorolib.c 
 		lctype.c ldblib.c ldebug.c ldo.c ldump.c lfunc.c lgc.c linit.c liolib.c
 		llex.c lmathlib.c lmem.c loadlib.c lobject.c lopcodes.c loslib.c
@@ -157,66 +157,49 @@ endif()
 	set(LUA_VANILLA_GENERATE_LUA_HPP false)
 endif()
 
-set(LUA_VANILLA_SOURCE_DIR "${LUA_BUILD_TOPLEVEL}/src")
-prepend(LUA_VANILLA_LIB_SOURCES "${LUA_VANILLA_SOURCE_DIR}/" ${LUA_VANILLA_LIB_SOURCES})
-prepend(LUA_VANILLA_LUA_SOURCES "${LUA_VANILLA_SOURCE_DIR}/" ${LUA_VANILLA_LUA_SOURCES})
-
 # download, just for the sake of download + extract
 # or pull from local folder
 if (LUA_LOCAL_DIR)
+	set(LUA_VANILLA_SOURCE_DIR ${LUA_BUILD_TOPLEVEL}-src)
+	list(TRANSFORM LUA_VANILLA_LIB_SOURCES PREPEND "${LUA_VANILLA_SOURCE_DIR}/src/")
+	list(TRANSFORM LUA_VANILLA_LUA_SOURCES PREPEND "${LUA_VANILLA_SOURCE_DIR}/src/")
 	file(COPY "${LUA_LOCAL_DIR}/src"
-		DESTINATION "${LUA_BUILD_TOPLEVEL}")
+		DESTINATION "${LUA_VANILLA_SOURCE_DIR}/")
 	file(COPY "${LUA_LOCAL_DIR}/include"
-		DESTINATION "${LUA_BUILD_TOPLEVEL}")
+		DESTINATION "${LUA_VANILLA_SOURCE_DIR}/")
 	add_custom_target(LUA_VANILLA
 		DEPENDS "${LUA_VANILLA_LIB_SOURCES}" "${LUA_VANILLA_LUA_SOURCES}")
-	set(LUA_VANILLA_INCLUDE_DIRS ${LUA_VANILLA_INCLUDE_DIRS} "${LUA_VANILLA_SOURCE_DIR}" "${LUA_BUILD_TOPLEVEL}/include")
+	set(LUA_VANILLA_INCLUDE_DIRS ${LUA_VANILLA_INCLUDE_DIRS} "${LUA_VANILLA_SOURCE_DIR}/include")
 else()
-	ExternalProject_Add(LUA_VANILLA
-		BUILD_IN_SOURCE TRUE
-		BUILD_ALWAYS FALSE
-		TLS_VERIFY TRUE
-		PREFIX ${LUA_BUILD_TOPLEVEL}
-		SOURCE_DIR ${LUA_BUILD_TOPLEVEL}
-		DOWNLOAD_DIR ${LUA_BUILD_TOPLEVEL}
-		TMP_DIR "${LUA_BUILD_TOPLEVEL}-tmp"
-		STAMP_DIR "${LUA_BUILD_TOPLEVEL}-stamp"
-		INSTALL_DIR "${LUA_BUILD_INSTALL_DIR}"
-		URL ${LUA_VANILLA_DOWNLOAD_URL}
-		CONFIGURE_COMMAND ""
-		BUILD_COMMAND ""
-		INSTALL_COMMAND ""
-		TEST_COMMAND ""
-		BUILD_BYPRODUCTS "${LUA_VANILLA_LIB_SOURCES}" "${LUA_VANILLA_LUA_SOURCES}")
-
-	# make a quick lua.hpp for 5.1 targets that don't have it
+	include(FetchContent)
+	FetchContent_Declare(
+		lua-vanilla
+		URL ${LUA_VANILLA_DOWNLOAD_URL})
+	FetchContent_GetProperties(lua-vanilla)
+	if ( NOT lua-vanilla_POPULATED)
+		# Fetch the content using previously declared details
+		FetchContent_Populate(lua-vanilla)
+		# do not add_subdirectory / build: we are JUST using ti as a download step!
+	endif()
+	list(TRANSFORM LUA_VANILLA_LIB_SOURCES PREPEND "${lua-vanilla_SOURCE_DIR}/src/")
+	list(TRANSFORM LUA_VANILLA_LUA_SOURCES PREPEND "${lua-vanilla_SOURCE_DIR}/src/")
+	# make a quick lua.hpp for targets that don't have it
 	if (LUA_VANILLA_GENERATE_LUA_HPP)
 		set(LUA_VANILLA_LUA_HPP_CONTENT "// lua.hpp
 // Lua header files for C++
 // <<extern \"C\">> not supplied automatically because Lua also compiles as C++
-
 extern \"C\" {
 #include \"lua.h\"
 #include \"lualib.h\"
 #include \"lauxlib.h\"
 }
 ")
-		set(LUA_VANILLA_SOURCE_LUA_HPP "${LUA_BUILD_TOPLEVEL}-tmp/lua.hpp")
-		set(LUA_VANILLA_DESTINATION_LUA_HPP "${LUA_VANILLA_SOURCE_DIR}/lua.hpp")
-		file(WRITE "${LUA_VANILLA_SOURCE_LUA_HPP}" "${LUA_VANILLA_LUA_HPP_CONTENT}")
+		set(LUA_VANILLA_SOURCE_LUA_HPP "${lua-vanilla_SOURCE_DIR}/include/lua.hpp")
+		file(CONFIGURE OUTPUT "${LUA_VANILLA_SOURCE_LUA_HPP}" CONTENT "${LUA_VANILLA_LUA_HPP_CONTENT}" @ONLY)
 		file(TO_NATIVE_PATH "${LUA_VANILLA_SOURCE_LUA_HPP}" LUA_VANILLA_SOURCE_LUA_HPP)
-		file(TO_NATIVE_PATH "${LUA_VANILLA_DESTINATION_LUA_HPP}" LUA_VANILLA_DESTINATION_LUA_HPP)
-		ExternalProject_Add_Step(LUA_VANILLA
-			prebuild
-			# after download, before build
-			DEPENDEES download
-			DEPENDERS build
-			BYPRODUCTS "${LUA_VANILLA_DESTINATION_LUA_HPP}"
-			COMMENT "Moving \"${LUA_VANILLA_SOURCE_LUA_HPP}\" to \"${LUA_VANILLA_DESTINATION_LUA_HPP}\"..."
-			COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_VANILLA_SOURCE_LUA_HPP}" "${LUA_VANILLA_DESTINATION_LUA_HPP}")
 	endif()
 
-	set(LUA_VANILLA_INCLUDE_DIRS ${LUA_VANILLA_SOURCE_DIR})
+	set(LUA_VANILLA_INCLUDE_DIRS ${lua-vanilla_SOURCE_DIR}/include)
 endif()
 
 # # Target names
@@ -233,7 +216,7 @@ set(luacompiler "luac-${LUA_VANILLA_VERSION}")
 
 # make an actual, buildable target
 # that other parts of the code can depend on
-add_library(${liblua} ${LUA_BUILD_LIBRARY_TYPE} "${LUA_VANILLA_LIB_SOURCES}")
+add_library(${liblua} ${LUA_BUILD_LIBRARY_TYPE} ${LUA_VANILLA_LIB_SOURCES})
 set_target_properties(${liblua}
 	PROPERTIES
 	LANGUAGE ${LUA_VANILLA_LANGUAGE}
@@ -259,8 +242,6 @@ else()
 		PRIVATE -w)
 endif()
 if (WIN32)
-	#target_compile_definitions(${liblua}
-	#	PRIVATE LUA_USE_WINDOWS)
 else()
 	target_compile_definitions(${liblua} 
 		PRIVATE LUA_USE_LINUX)
@@ -353,4 +334,4 @@ set(LUA_INTERPRETER ${luainterpreter})
 if (LUA_BUILD_LUA_COMPILER)
 	set(LUA_COMPILER ${luacompiler})
 endif()
-set(LUA_INCLUDE_DIRS "${LUA_VANILLA_SOURCE_DIR}")
+set(LUA_INCLUDE_DIRS ${LUA_VANILLA_INCLUDE_DIRS})

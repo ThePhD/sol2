@@ -28,7 +28,7 @@ int main(int, char*[]) {
 	int result1 = b_as_function(1);
 	// pass 'self' directly to argument
 	int result2 = b_call(b, 1);
-	sol_c_assert(result1 == result2);
-	sol_c_assert(result1 == 1);
-	sol_c_assert(result2 == 1);
+	SOL_ASSERT(result1 == result2);
+	SOL_ASSERT(result1 == 1);
+	SOL_ASSERT(result2 == 1);
 }

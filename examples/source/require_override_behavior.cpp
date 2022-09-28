@@ -55,7 +55,7 @@ int main() {
 		print(test)
 	)",
 	     sol::script_pass_on_error);
-	sol_c_assert(a_result.valid());
+	SOL_ASSERT(a_result.valid());
 	try {
 		// this will always fail
 		auto b_result = lua.safe_script(R"(
@@ -65,7 +65,7 @@ int main() {
 		     sol::script_throw_on_error);
 		// this will not be executed because of the throw,
 		// but it better be true regardless!
-		sol_c_assert(!b_result.valid());
+		SOL_ASSERT(!b_result.valid());
 	}
 	catch (const std::exception& ex) {
 		// Whenever sol2 throws an exception from panic,

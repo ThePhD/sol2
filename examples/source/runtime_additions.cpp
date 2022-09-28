@@ -34,7 +34,7 @@ obj:print()
 	)");
 
 	object& obj = lua["obj"];
-	sol_c_assert(obj.value == 1);
+	SOL_ASSERT(obj.value == 1);
 
 	return 0;
 }

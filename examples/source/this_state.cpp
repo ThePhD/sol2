@@ -23,9 +23,9 @@ int main() {
 
 	lua.script("second = bark(2, 2)"); // only takes 2 arguments
 	int first = lua["first"];
-	sol_c_assert(first == 6);
+	SOL_ASSERT(first == 6);
 	int second = lua["second"];
-	sol_c_assert(second == 6);
+	SOL_ASSERT(second == 6);
 
 	return 0;
 }

@@ -84,7 +84,7 @@ namespace sol { namespace stack { namespace stack_detail {
 			pushed += 1;
 		}
 		int metatable_exists = lua_getmetatable(L_, 1);
-		sol_c_assert(metatable_exists == 1);
+		SOL_ASSERT(metatable_exists == 1);
 		const auto& index_key = to_string(sol::meta_function::index);
 		lua_getfield(L_, lua_gettop(L_), index_key.c_str());
 		lua_remove(L_, -2);

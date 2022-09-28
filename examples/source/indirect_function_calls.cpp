@@ -69,8 +69,8 @@ end
 	int subtract_result = lua["subtract_result"];
 	int add_result = lua["add_result"];
 
-	sol_c_assert(add_result == 6);
-	sol_c_assert(subtract_result == 4);
+	SOL_ASSERT(add_result == 6);
+	SOL_ASSERT(subtract_result == 4);
 
 	std::cout << std::endl;
 	return 0;

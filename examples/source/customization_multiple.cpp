@@ -64,8 +64,8 @@ int main() {
 	sol::function f = lua["f"];
 
 	two_things things = f(two_things { 24, false });
-	sol_c_assert(things.a == 24);
-	sol_c_assert(things.b == false);
+	SOL_ASSERT(things.a == 24);
+	SOL_ASSERT(things.b == false);
 	// things.a == 24
 	// things.b == true
 

@@ -51,6 +51,7 @@ x86/
 scratch/
 
 # CMake
+/.cmake
 build/
 build-sol2/
 CMakeCache.txt
