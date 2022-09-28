@@ -39,7 +39,7 @@ function(find_lua_build LUA_VERSION)
 	else()
 		set(LUA_BUILD_LIBNAME lua-${LUA_VERSION})
 	endif()
-	set(LUA_BUILD_TOPLEVEL "${CMAKE_BINARY_DIR}/vendor/${LUA_BUILD_LIBNAME}")
+	set(LUA_BUILD_TOPLEVEL "${CMAKE_BINARY_DIR}/_deps/${LUA_BUILD_LIBNAME}")
 	set(LUA_BUILD_INSTALL_DIR "${LUA_BUILD_TOPLEVEL}")
 	# # Misc needed variables
 	set(LUA_BUILD_LIBRARY_DESCRIPTION "The base name of the library to build either the static or the dynamic library")

@@ -28,7 +28,7 @@ return 24
 			     code, sol::script_default_on_error);
 			// This will never be reached
 			std::cout << value << std::endl;
-			sol_c_assert(value == 24);
+			SOL_ASSERT(value == 24);
 		}
 		catch (const sol::error& err) {
 			std::cout << "Something went horribly wrong: "
@@ -46,7 +46,7 @@ return 24
 	{
 		sol::protected_function_result result
 		     = lua.script(code, sol::script_pass_on_error);
-		sol_c_assert(!result.valid());
+		SOL_ASSERT(!result.valid());
 		if (!result.valid()) {
 			sol::error err = result;
 			sol::call_status status = result.status();
@@ -65,7 +65,7 @@ return 24
 	// any errors The two previous approaches are recommended
 	{
 		sol::load_result loaded_chunk = lua.load(code);
-		sol_c_assert(!loaded_chunk.valid());
+		SOL_ASSERT(!loaded_chunk.valid());
 		if (!loaded_chunk.valid()) {
 			sol::error err = loaded_chunk;
 			sol::load_status status = loaded_chunk.status();
@@ -77,7 +77,7 @@ return 24
 		else {
 			// Because the syntax is bad, this will never be
 			// reached
-			sol_c_assert(false);
+			SOL_ASSERT(false);
 			// If there is a runtime error (lua GC memory
 			// error, nil access, etc.) it will be caught here
 			sol::protected_function script_func

@@ -22,7 +22,7 @@ int main(int, char*[]) {
 
 	// run a script, get the result
 	int value = lua.script("return 54");
-	sol_c_assert(value == 54);
+	SOL_ASSERT(value == 54);
 
 	auto bad_code_result = lua.script("123 herp.derp",
 	     [](lua_State*, sol::protected_function_result pfr) {
@@ -34,7 +34,7 @@ int main(int, char*[]) {
 		     return pfr;
 	     });
 	// it did not work
-	sol_c_assert(!bad_code_result.valid());
+	SOL_ASSERT(!bad_code_result.valid());
 
 	// the default handler panics or throws, depending on your
 	// settings uncomment for explosions: auto bad_code_result_2

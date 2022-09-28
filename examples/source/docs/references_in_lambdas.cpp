@@ -20,9 +20,9 @@ int main(int, char*[]) {
 	test& from_lua_t2 = lua["t2"];
 
 	// not the same: 'f' lambda copied
-	sol_c_assert(&from_lua_t1 != &t);
+	SOL_ASSERT(&from_lua_t1 != &t);
 	// the same: 'g' lambda returned reference
-	sol_c_assert(&from_lua_t2 == &t);
+	SOL_ASSERT(&from_lua_t2 == &t);
 
 	return 0;
 }

@@ -30,10 +30,10 @@ int main() {
 	)");
 
 	something& s = lua["s"];
-	sol_c_assert(s.arr[0] == 5);
-	sol_c_assert(s.arr[1] == 6);
-	sol_c_assert(s.arr[2] == 40);
-	sol_c_assert(s.arr[3] == 8);
+	SOL_ASSERT(s.arr[0] == 5);
+	SOL_ASSERT(s.arr[1] == 6);
+	SOL_ASSERT(s.arr[2] == 40);
+	SOL_ASSERT(s.arr[3] == 8);
 
 	std::string string_array[] = {
 		"first string",
@@ -49,7 +49,7 @@ int main() {
 		print(str_arr[3])
 	)");
 
-	sol_c_assert(string_array[2] == "third string: modified");
+	SOL_ASSERT(string_array[2] == "third string: modified");
 
 	return 0;
 }

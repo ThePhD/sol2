@@ -22,10 +22,10 @@ int main() {
 	vars& beep = lua["beep"];
 	int bopvalue = lua["bopvalue"];
 
-	sol_c_assert(beep.boop == 1);
-	sol_c_assert(lua.get<vars>("beep").boop == 1);
-	sol_c_assert(beep.bop() == 2);
-	sol_c_assert(bopvalue == 2);
+	SOL_ASSERT(beep.boop == 1);
+	SOL_ASSERT(lua.get<vars>("beep").boop == 1);
+	SOL_ASSERT(beep.bop() == 2);
+	SOL_ASSERT(bopvalue == 2);
 
 	return 0;
 }

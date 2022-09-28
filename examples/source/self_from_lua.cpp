@@ -19,7 +19,7 @@ int main() {
 
 			// definitely the same
 			thing& self = selfobj.as<thing>();
-			sol_c_assert(&self == this);
+			SOL_ASSERT(&self == this);
 		}
 
 		void func(sol::this_state ts) const {
@@ -32,7 +32,7 @@ int main() {
 			thing& self = selfobj.as<thing>();
 
 			// definitely the same
-			sol_c_assert(&self == this);
+			SOL_ASSERT(&self == this);
 		}
 	};
 

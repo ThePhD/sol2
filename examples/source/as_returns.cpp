@@ -21,9 +21,9 @@ int main() {
 	std::string v2 = lua["v2"];
 	std::string v3 = lua["v3"];
 
-	sol_c_assert(v1 == "arf");
-	sol_c_assert(v2 == "bark");
-	sol_c_assert(v3 == "woof");
+	SOL_ASSERT(v1 == "arf");
+	SOL_ASSERT(v2 == "bark");
+	SOL_ASSERT(v3 == "woof");
 
 	return 0;
 }

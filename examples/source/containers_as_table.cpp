@@ -16,10 +16,10 @@ void demo(
           src) {
 	std::cout << "demo, sol::nested<...>" << std::endl;
 	const auto& listmap = src.value();
-	sol_c_assert(listmap.size() == 2);
+	SOL_ASSERT(listmap.size() == 2);
 	for (const auto& kvp : listmap) {
 		const std::vector<std::string>& strings = kvp.second;
-		sol_c_assert(strings.size() == 3);
+		SOL_ASSERT(strings.size() == 3);
 		std::cout << "\t" << kvp.first << " = ";
 		for (const auto& s : strings) {
 			std::cout << "'" << s << "'"
@@ -46,13 +46,13 @@ void demo_explicit(sol::as_table_t<std::map<std::string,
 	// Have to access the "source" member variable for
 	// as_table_t
 	const auto& listmap = src.value();
-	sol_c_assert(listmap.size() == 2);
+	SOL_ASSERT(listmap.size() == 2);
 	for (const auto& kvp : listmap) {
 		// Have to access the internal "source" for the inner
 		// as_table_t, as well
 		const std::vector<std::string>& strings
 		     = kvp.second.value();
-		sol_c_assert(strings.size() == 3);
+		SOL_ASSERT(strings.size() == 3);
 		std::cout << "\t" << kvp.first << " = ";
 		for (const auto& s : strings) {
 			std::cout << "'" << s << "'"

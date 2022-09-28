@@ -27,14 +27,14 @@ int main() {
 
 	// retrivies value inside of lua table above
 	std::string value = z;
-	sol_c_assert(value == "arf!");
+	SOL_ASSERT(value == "arf!");
 
 	// Can change the value later...
 	z = 20;
 
 	// Yay, lazy-evaluation!
 	int changed_value = z; // now it's 20!
-	sol_c_assert(changed_value == 20);
+	SOL_ASSERT(changed_value == 20);
 	lua.script("assert(bark.woof[2] == 20)");
 
 	lua["a_new_value"] = 24;

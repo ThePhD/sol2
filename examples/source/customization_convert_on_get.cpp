@@ -56,8 +56,8 @@ int main() {
 	number_shim thingsf = lua["vf"];
 	number_shim thingsg = lua["vg"];
 
-	sol_c_assert(thingsf.num == 25);
-	sol_c_assert(thingsg.num == 35);
+	SOL_ASSERT(thingsf.num == 25);
+	SOL_ASSERT(thingsg.num == 35);
 
 	return 0;
 }

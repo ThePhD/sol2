@@ -28,8 +28,8 @@ int main() {
 	sol::tie(first, second) = multi();
 
 	// use the values
-	sol_c_assert(first == 10);
-	sol_c_assert(second == "goodbye");
+	SOL_ASSERT(first == 10);
+	SOL_ASSERT(second == "goodbye");
 
 	// sol::as_returns
 	// works with any iterable,
@@ -48,9 +48,9 @@ int main() {
 	int b = lua["b"];
 	int c = lua["c"];
 
-	sol_c_assert(a == 55);
-	sol_c_assert(b == 66);
-	sol_c_assert(c == 77);
+	SOL_ASSERT(a == 55);
+	SOL_ASSERT(b == 66);
+	SOL_ASSERT(c == 77);
 
 	// sol::variadic_results
 	// you can push objects of different types
@@ -74,9 +74,9 @@ int main() {
 	bool u = lua["u"];
 	std::string v = lua["v"];
 
-	sol_c_assert(t == 42);
-	sol_c_assert(u);
-	sol_c_assert(v == "awoo");
+	SOL_ASSERT(t == 42);
+	SOL_ASSERT(u);
+	SOL_ASSERT(v == "awoo");
 
 	return 0;
 }

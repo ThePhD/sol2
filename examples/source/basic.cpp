@@ -46,7 +46,7 @@ int main() {
 			             "appear above this one!"
 			          << std::endl;
 			int value = result;
-			sol_c_assert(value == 24);
+			SOL_ASSERT(value == 24);
 		}
 		else {
 			std::cout << "the third script failed, check the "
@@ -63,7 +63,7 @@ int main() {
 			             "wasn't supposed to! Panic!"
 			          << std::endl;
 			int value = result;
-			sol_c_assert(value == 24);
+			SOL_ASSERT(value == 24);
 		}
 		else {
 			sol::error err = result;

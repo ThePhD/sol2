@@ -38,7 +38,7 @@ int main(int, char*[]) {
 	sol::load_result script3 = lua.load("return 24");
 	// execute, get return value
 	int value2 = script3();
-	sol_c_assert(value2 == 24);
+	SOL_ASSERT(value2 == 24);
 
 	std::cout << std::endl;
 

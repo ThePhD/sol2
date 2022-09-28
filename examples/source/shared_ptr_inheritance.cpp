@@ -55,7 +55,7 @@ int main() {
 
 	sol::protected_function_result result = lua.safe_script(
 	     "inspect_shape_table({shape=Box.new()})");
-	sol_c_assert(result.valid());
+	SOL_ASSERT(result.valid());
 
 	return 0;
 }

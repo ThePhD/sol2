@@ -51,7 +51,7 @@ int main() {
 	// calling this function also works
 	lua.script("bark.print_my_class(obj)");
 	my_class& obj = lua["obj"];
-	sol_c_assert(obj.b == 25);
+	SOL_ASSERT(obj.b == 25);
 
 	std::cout << std::endl;
 

@@ -86,7 +86,7 @@ void register_sol_stuff(lua_State* L) {
 		                  "kaguya-created ABC { "
 		               << from_kaguya.value() << " }"
 		               << std::endl;
-		     sol_c_assert(from_kaguya.value() == 24);
+		     SOL_ASSERT(from_kaguya.value() == 24);
 	     },
 	     [](ABC& from_kaguya, int second_arg) {
 		     std::cout << "calling 2-argument version with "
@@ -94,8 +94,8 @@ void register_sol_stuff(lua_State* L) {
 		               << from_kaguya.value()
 		               << " } and integer argument of "
 		               << second_arg << std::endl;
-		     sol_c_assert(from_kaguya.value() == 24);
-		     sol_c_assert(second_arg == 5);
+		     SOL_ASSERT(from_kaguya.value() == 24);
+		     SOL_ASSERT(second_arg == 5);
 	     });
 }
 
@@ -103,7 +103,7 @@ void check_with_sol(lua_State* L) {
 	sol::state_view lua(L);
 	ABC& obj = lua["obj"];
 	(void)obj;
-	sol_c_assert(obj.value() == 24);
+	SOL_ASSERT(obj.value() == 24);
 }
 
 int main(int, char*[]) {

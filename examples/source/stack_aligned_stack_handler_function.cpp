@@ -40,8 +40,8 @@ int main(int, char*[]) {
 	traceback_handler.pop();
 
 	// make sure everything is clean
-	sol_c_assert(result == 22);
-	sol_c_assert(
+	SOL_ASSERT(result == 22);
+	SOL_ASSERT(
 	     lua.stack_top() == 0); // stack is empty/balanced
 
 	return 0;

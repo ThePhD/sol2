@@ -65,8 +65,8 @@ int main() {
 	vec& a1 = lua["a1"];
 	vec& s1 = lua["s1"];
 
-	sol_c_assert(a1.x == 1 && a1.y == 1);
-	sol_c_assert(s1.x == 1 && s1.y == -1);
+	SOL_ASSERT(a1.x == 1 && a1.y == 1);
+	SOL_ASSERT(s1.x == 1 && s1.y == -1);
 
 	lua["a2"] = lua["a1"];
 

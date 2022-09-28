@@ -145,7 +145,7 @@ namespace sol { namespace stack {
 		lua_State* target_L = target.lua_state();
 		int target_index = absolute_index(target_L, -target.push());
 		int env_count = push_environment_of(target_L, target_index);
-		sol_c_assert(env_count == 1);
+		SOL_ASSERT(env_count == 1);
 		lua_rotate(target_L, target_index, 1);
 		lua_pop(target_L, 1);
 		return env_count;
@@ -323,7 +323,7 @@ namespace sol { namespace stack {
 				if (static_cast<T>(llround(static_cast<lua_Number>(value))) != value) {
 #if SOL_IS_OFF(SOL_EXCEPTIONS)
 					// Is this really worth it?
-					sol_m_assert(false, "integer value will be misrepresented in lua");
+					SOL_ASSERT_MSG(false, "integer value will be misrepresented in lua");
 					lua_pushinteger(L, static_cast<lua_Integer>(value));
 					return 1;
 #else

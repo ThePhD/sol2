@@ -40,15 +40,15 @@ int main() {
 	// get the results and see
 	// if it worked out
 	int r1 = lua["r1"];
-	sol_c_assert(r1 == 32);
+	SOL_ASSERT(r1 == 32);
 	int r2 = lua["r2"];
-	sol_c_assert(r2 == 1);
+	SOL_ASSERT(r2 == 1);
 	double r3 = lua["r3"];
-	sol_c_assert(r3 == 2.5);
+	SOL_ASSERT(r3 == 2.5);
 	int r4 = lua["r4"];
-	sol_c_assert(r4 == 32);
+	SOL_ASSERT(r4 == 32);
 	int r5 = lua["r5"];
-	sol_c_assert(r5 == 1);
+	SOL_ASSERT(r5 == 1);
 
 	return 0;
 }

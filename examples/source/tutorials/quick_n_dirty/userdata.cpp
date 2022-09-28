@@ -52,11 +52,11 @@ int main(int, char*[]) {
 	Doge& lua_dog_move = lua["dog_move"];
 	Doge& lua_dog_unique_ptr = lua["dog_unique_ptr"];
 	Doge& lua_dog_shared_ptr = lua["dog_shared_ptr"];
-	sol_c_assert(lua_dog.tailwag == 50);
-	sol_c_assert(lua_dog_copy.tailwag == 30);
-	sol_c_assert(lua_dog_move.tailwag == 30);
-	sol_c_assert(lua_dog_unique_ptr.tailwag == 25);
-	sol_c_assert(lua_dog_shared_ptr.tailwag == 31);
+	SOL_ASSERT(lua_dog.tailwag == 50);
+	SOL_ASSERT(lua_dog_copy.tailwag == 30);
+	SOL_ASSERT(lua_dog_move.tailwag == 30);
+	SOL_ASSERT(lua_dog_unique_ptr.tailwag == 25);
+	SOL_ASSERT(lua_dog_shared_ptr.tailwag == 31);
 
 	// lua will treat these types as opaque, and you will be
 	// able to pass them around to C++ functions and Lua

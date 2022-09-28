@@ -63,31 +63,31 @@ int main() {
 		my_type& ref_to_my_type = lua["unique"];
 		my_type* ptr_to_my_type = lua["unique"];
 
-		sol_c_assert(
+		SOL_ASSERT(
 		     ptr_to_my_type == ref_to_unique_ptr.get());
-		sol_c_assert(
+		SOL_ASSERT(
 		     &ref_to_my_type == ref_to_unique_ptr.get());
-		sol_c_assert(ref_to_unique_ptr->value == 10);
+		SOL_ASSERT(ref_to_unique_ptr->value == 10);
 
 		// script affects all of them equally
 		lua.script("unique.value = 20");
 
-		sol_c_assert(ptr_to_my_type->value == 20);
-		sol_c_assert(ref_to_my_type.value == 20);
-		sol_c_assert(ref_to_unique_ptr->value == 20);
+		SOL_ASSERT(ptr_to_my_type->value == 20);
+		SOL_ASSERT(ref_to_my_type.value == 20);
+		SOL_ASSERT(ref_to_unique_ptr->value == 20);
 	}
 	{
 		std::cout << "getting copy of unique_ptr..."
 		          << std::endl;
 		my_type copy_of_value = lua["unique"];
 
-		sol_c_assert(copy_of_value.value == 20);
+		SOL_ASSERT(copy_of_value.value == 20);
 
 		// script still affects pointer, but does not affect
 		// copy of `my_type`
 		lua.script("unique.value = 30");
 
-		sol_c_assert(copy_of_value.value == 20);
+		SOL_ASSERT(copy_of_value.value == 20);
 	}
 	// set to nil and collect garbage to destroy it
 	lua.script("unique = nil");

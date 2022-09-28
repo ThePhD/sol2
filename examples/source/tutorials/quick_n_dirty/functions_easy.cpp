@@ -18,15 +18,15 @@ int main(int, char*[]) {
 	     = fx;
 
 	int is_one = stdfx(1, 34.5, 3, "bark");
-	sol_c_assert(is_one == 1);
+	SOL_ASSERT(is_one == 1);
 	int is_also_one = fx(1, "boop", 3, "bark");
-	sol_c_assert(is_also_one == 1);
+	SOL_ASSERT(is_also_one == 1);
 
 	// call through operator[]
 	int is_three = lua["g"](1, 2);
-	sol_c_assert(is_three == 3);
+	SOL_ASSERT(is_three == 3);
 	double is_4_8 = lua["g"](2.4, 2.4);
-	sol_c_assert(is_4_8 == 4.8);
+	SOL_ASSERT(is_4_8 == 4.8);
 
 	return 0;
 }

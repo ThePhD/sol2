@@ -14,9 +14,9 @@ int main(int, char*[]) {
 	int b;
 	std::string c;
 	sol::tie(a, b, c) = lua["f"](100, 200, "bark");
-	sol_c_assert(a == 100);
-	sol_c_assert(b == 200);
-	sol_c_assert(c == "bark");
+	SOL_ASSERT(a == 100);
+	SOL_ASSERT(b == 200);
+	SOL_ASSERT(c == "bark");
 
 	return 0;
 }

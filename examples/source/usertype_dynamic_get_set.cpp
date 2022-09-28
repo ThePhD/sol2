@@ -162,8 +162,8 @@ int main() {
 	sol::userdata v1 = lua["v1"];
 	double v1x = v1["x"];
 	double v1y = v1["y"];
-	sol_c_assert(v1x == 1.000);
-	sol_c_assert(v1y == 0.000);
+	SOL_ASSERT(v1x == 1.000);
+	SOL_ASSERT(v1y == 0.000);
 	v1[0] = 2.000;
 
 	lua.script(R"(

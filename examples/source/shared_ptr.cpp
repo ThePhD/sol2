@@ -72,18 +72,18 @@ int main() {
 		          << ref_to_shared_ptr.use_count()
 		          << std::endl;
 
-		sol_c_assert(
+		SOL_ASSERT(
 		     ptr_to_my_type == ref_to_shared_ptr.get());
-		sol_c_assert(
+		SOL_ASSERT(
 		     &ref_to_my_type == ref_to_shared_ptr.get());
-		sol_c_assert(ref_to_shared_ptr->value == 10);
+		SOL_ASSERT(ref_to_shared_ptr->value == 10);
 
 		// script affects all of them equally
 		lua.script("shared.value = 20");
 
-		sol_c_assert(ptr_to_my_type->value == 20);
-		sol_c_assert(ref_to_my_type.value == 20);
-		sol_c_assert(ref_to_shared_ptr->value == 20);
+		SOL_ASSERT(ptr_to_my_type->value == 20);
+		SOL_ASSERT(ref_to_my_type.value == 20);
+		SOL_ASSERT(ref_to_shared_ptr->value == 20);
 	}
 	{
 		std::cout << "getting copy of shared_ptr..."
@@ -98,15 +98,15 @@ int main() {
 		          << copy_of_shared_ptr.use_count()
 		          << std::endl;
 
-		sol_c_assert(copy_of_shared_ptr->value == 20);
-		sol_c_assert(copy_of_value.value == 20);
+		SOL_ASSERT(copy_of_shared_ptr->value == 20);
+		SOL_ASSERT(copy_of_value.value == 20);
 
 		// script still affects pointer, but does not affect
 		// copy of `my_type`
 		lua.script("shared.value = 30");
 
-		sol_c_assert(copy_of_shared_ptr->value == 30);
-		sol_c_assert(copy_of_value.value == 20);
+		SOL_ASSERT(copy_of_shared_ptr->value == 30);
+		SOL_ASSERT(copy_of_value.value == 20);
 	}
 	// set to nil and collect garbage to destroy it
 	lua.script("shared = nil");

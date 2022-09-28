@@ -72,8 +72,8 @@ print('h2.data is ' .. h2.data)
 )");
 		holy& h1 = lua["h1"];
 		holy& h2 = lua["h2"];
-		sol_c_assert(h1.data == 50);
-		sol_c_assert(h2.data == 0);
+		SOL_ASSERT(h1.data == 50);
+		SOL_ASSERT(h2.data == 0);
 	}
 	std::cout << std::endl;
 }

@@ -22,7 +22,7 @@ int main() {
 	// Read out the global variable we stored in 'some_str' in
 	// the quick lua code we just executed
 	std::string some_str = lua["some_str"];
-	sol_c_assert(some_str == "DaD");
+	SOL_ASSERT(some_str == "DaD");
 
 	return 0;
 }

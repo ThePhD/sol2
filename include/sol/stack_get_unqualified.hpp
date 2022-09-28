@@ -24,6 +24,8 @@
 #ifndef SOL_STACK_UNQUALIFIED_GET_HPP
 #define SOL_STACK_UNQUALIFIED_GET_HPP
 
+#include <sol/version.hpp>
+
 #include <sol/stack_core.hpp>
 #include <sol/usertype_traits.hpp>
 #include <sol/inheritance.hpp>
@@ -184,10 +186,10 @@ namespace sol { namespace stack {
 	struct qualified_getter {
 		static decltype(auto) get(lua_State* L, int index, record& tracking) {
 			using Tu = meta::unqualified_t<X>;
-			static constexpr bool is_userdata_of_some_kind
+			static constexpr bool is_maybe_userdata_of_some_kind
 				= !std::is_reference_v<
 				       X> && is_container_v<Tu> && std::is_default_constructible_v<Tu> && !is_lua_primitive_v<Tu> && !is_transparent_argument_v<Tu>;
-			if constexpr (is_userdata_of_some_kind) {
+			if constexpr (is_maybe_userdata_of_some_kind) {
 				if (type_of(L, index) == type::userdata) {
 					return static_cast<Tu>(stack_detail::unchecked_unqualified_get<Tu>(L, index, tracking));
 				}
@@ -578,20 +580,20 @@ namespace sol { namespace stack {
 			using Tu = meta::unqualified_t<T>;
 			if constexpr (is_container_v<Tu>) {
 				if constexpr (meta::is_associative<Tu>::value) {
-					typedef typename T::value_type P;
+					typedef typename Tu::value_type P;
 					typedef typename P::first_type K;
 					typedef typename P::second_type V;
-					unqualified_getter<as_table_t<T>> g{};
+					unqualified_getter<as_table_t<T>> g {};
 					return g.get(types<K, nested<V>>(), L, index, tracking);
 				}
 				else {
-					typedef typename T::value_type V;
-					unqualified_getter<as_table_t<T>> g{};
+					typedef typename Tu::value_type V;
+					unqualified_getter<as_table_t<T>> g {};
 					return g.get(types<nested<V>>(), L, index, tracking);
 				}
 			}
 			else {
-				unqualified_getter<Tu> g{};
+				unqualified_getter<Tu> g {};
 				return g.get(L, index, tracking);
 			}
 		}
@@ -608,6 +610,20 @@ namespace sol { namespace stack {
 	struct unqualified_getter<as_container_t<T>*> {
 		static decltype(auto) get(lua_State* L, int index, record& tracking) {
 			return stack::unqualified_get<T*>(L, index, tracking);
+		}
+	};
+
+	template <typename T>
+	struct unqualified_getter<exhaustive<T>> {
+		static decltype(auto) get(lua_State* arg_L, int index, record& tracking) {
+			return stack::get<T>(arg_L, index, tracking);
+		}
+	};
+
+	template <typename T>
+	struct unqualified_getter<non_exhaustive<T>> {
+		static decltype(auto) get(lua_State* arg_L, int index, record& tracking) {
+			return stack::get<T>(arg_L, index, tracking);
 		}
 	};
 

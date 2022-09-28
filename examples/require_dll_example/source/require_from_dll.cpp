@@ -27,9 +27,9 @@ print(obj.value))";
 		std::cout << "Something bad happened: " << err.what()
 		          << std::endl;
 	}
-	sol_c_assert(script_result.valid());
+	SOL_ASSERT(script_result.valid());
 	my_object::test& obj = lua["obj"];
-	sol_c_assert(obj.value == 24);
+	SOL_ASSERT(obj.value == 24);
 
 	return 0;
 }

@@ -80,8 +80,8 @@ print("accumulate after :", ns:accumulate())
 
 	number_storage& ns = lua["ns"];
 	number_storage& ns_container = lua["ns_container"];
-	sol_c_assert(&ns == &ns_container);
-	sol_c_assert(ns.size() == 3);
+	SOL_ASSERT(&ns == &ns_container);
+	SOL_ASSERT(ns.size() == 3);
 
 	std::cout << std::endl;
 

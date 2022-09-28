@@ -22,7 +22,7 @@ int main() {
 	sol::load_result lr
 	     = lua.load("a = function (v) print(v) return v end");
 	// check if it's sucessfully loaded
-	sol_c_assert(lr.valid());
+	SOL_ASSERT(lr.valid());
 
 	// turn it into a function, then dump the bytecode
 	sol::protected_function target
@@ -34,12 +34,12 @@ int main() {
 	auto result2 = lua2.safe_script(
 	     target_bc.as_string_view(), sol::script_pass_on_error);
 	// check if it was done properly
-	sol_c_assert(result2.valid());
+	SOL_ASSERT(result2.valid());
 
 	// check in the second state if it was valid
 	sol::protected_function pf = lua2["a"];
 	int v = pf(25557);
-	sol_c_assert(v == 25557);
+	SOL_ASSERT(v == 25557);
 
 	return 0;
 }
