@@ -39,6 +39,7 @@
 #include <initializer_list>
 #include <string>
 #include <string_view>
+#include <limits>
 #include <optional>
 #include <memory>
 #if SOL_IS_ON(SOL_STD_VARIANT)
@@ -494,7 +495,7 @@ namespace sol {
 	};
 
 	template <typename T>
-	using exhaustive = exhaustive_until<T, std::numeric_limits<size_t>::max()>;
+	using exhaustive = exhaustive_until<T, (std::numeric_limits<size_t>::max)()>;
 
 	template <typename T>
 	struct non_exhaustive : private detail::ebco<T> {
