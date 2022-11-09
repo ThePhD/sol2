@@ -23,7 +23,7 @@ struct worker_data {
 };
 
 void worker_thread(worker_data& data) {
-	for (std::uint64_t loops = 0; true; ++loops) {
+	for ([[maybe_unused]] std::uint64_t loops = 0; true; ++loops) {
 		// Wait until main() sends data
 		std::unique_lock<std::mutex> data_lock(
 		     data.until_ready_mutex);

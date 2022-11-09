@@ -582,7 +582,7 @@ namespace sol { namespace stack {
 	template <typename T, std::size_t N, type expect>
 	struct unqualified_checker<exhaustive_until<T, N>, expect> {
 		template <typename K, typename V, typename Handler>
-		static bool check_two(types<K, V>, lua_State* arg_L, int index, type indextype, Handler&& handler, record& tracking) {
+		static bool check_two(types<K, V>, lua_State* arg_L, int relindex, type indextype, Handler&& handler, record& tracking) {
 			tracking.use(1);
 
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK)
