@@ -1190,7 +1190,7 @@ namespace sol {
 		}
 
 		template <typename T>
-		decltype(auto) get_usertype(lua_State* L, int index = -lua_size_v<meta::unqualified_t<T>>) {
+		decltype(auto) get_usertype(lua_State* L, int index = -lua_size_v<meta::unqualified_t<T> >) {
 			record tracking {};
 			return get_usertype<T>(L, index, tracking);
 		}
