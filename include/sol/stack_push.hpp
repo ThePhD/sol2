@@ -342,7 +342,7 @@ namespace sol { namespace stack {
 				return 1;
 			}
 			else if constexpr (std::is_same_v<Tu, luaL_Stream*>) {
-				luaL_Stream* source { std::forward<Args>(args)... };
+				luaL_Stream* source(std::forward<Args>(args)...);
 				luaL_Stream* stream = static_cast<luaL_Stream*>(detail::alloc_newuserdata(L, sizeof(luaL_Stream)));
 				stream->f = source->f;
 #if SOL_IS_ON(SOL_LUAL_STREAM_USE_CLOSE_FUNCTION)
