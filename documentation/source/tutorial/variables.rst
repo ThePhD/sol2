@@ -19,7 +19,7 @@ You can interact with the Lua Virtual Machine like so:
 	:linenos:
 	:lines: 1-10, 12-12, 20-24, 70-
 
-From this example, you can see that there's many ways to pull out the varaibles you want. For example, to determine if a nested variable exists or not, you can use ``auto`` to capture the value of a ``table[key]`` lookup, and then use the ``.valid()`` method:
+From this example, you can see that there's many ways to pull out the variables you want. For example, to determine if a nested variable exists or not, you can use ``auto`` to capture the value of a ``table[key]`` lookup, and then use the ``.valid()`` method:
 
 
 .. literalinclude:: ../../../examples/source/tutorials/variables_demo.cpp
