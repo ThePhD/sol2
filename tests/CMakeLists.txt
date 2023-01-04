@@ -83,6 +83,7 @@ function(sol2_create_basic_test test_target_name target_sol)
 endfunction()
 
 add_subdirectory(inclusion)
+add_subdirectory(container_exhaustive)
 add_subdirectory(enum)
 add_subdirectory(environment)
 add_subdirectory(exceptions)

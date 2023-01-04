@@ -77,6 +77,15 @@ namespace sol {
 		table_proxy(Table table, T&& k) : tbl(table), key(std::forward<T>(k)) {
 		}
 
+		table_proxy(const table_proxy&) = default;
+		table_proxy(table_proxy&&) = default;
+		table_proxy& operator=(const table_proxy& right) {
+			return set(right);
+		}
+		table_proxy& operator=(table_proxy&& right) {
+			return set(std::move(right));
+		}
+
 		template <typename T>
 		table_proxy& set(T&& item) & {
 			tuple_set(std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>(), std::forward<T>(item));
@@ -101,7 +110,7 @@ namespace sol {
 			return std::move(*this);
 		}
 
-		template <typename T>
+		template <typename T, std::enable_if_t<!std::is_same_v<meta::unqualified_t<T>, table_proxy>>* = nullptr>
 		table_proxy& operator=(T&& other) & {
 			using Tu = meta::unwrap_unqualified_t<T>;
 			if constexpr (!is_lua_reference_or_proxy_v<Tu> && meta::is_invocable_v<Tu>) {
@@ -112,7 +121,7 @@ namespace sol {
 			}
 		}
 
-		template <typename T>
+		template <typename T, std::enable_if_t<!std::is_same_v<meta::unqualified_t<T>, table_proxy>>* = nullptr>
 		table_proxy&& operator=(T&& other) && {
 			using Tu = meta::unwrap_unqualified_t<T>;
 			if constexpr (!is_lua_reference_or_proxy_v<Tu> && meta::is_invocable_v<Tu> && !detail::is_msvc_callable_rigged_v<T>) {
