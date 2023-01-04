@@ -608,7 +608,7 @@ namespace sol { namespace stack {
 		}
 
 		template <typename V, typename Handler>
-		static bool check_one(types<V>, lua_State* arg_L, int relindex, type indextype, Handler&& handler, record& tracking) {
+		static bool check_one(types<V>, lua_State* arg_L, int relindex, type, Handler&& handler, record& tracking) {
 			tracking.use(1);
 
 			size_t index = lua_absindex(arg_L, relindex);
@@ -645,7 +645,6 @@ namespace sol { namespace stack {
 				++idx;
 			loop_continue:;
 			}
-			return true;
 		}
 
 		template <typename Handler>

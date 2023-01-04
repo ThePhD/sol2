@@ -370,10 +370,10 @@ namespace sol {
 
 			constexpr std::size_t initial_size = aligned_space_for<T*, unique_destructor, unique_tag, Real>();
 
-			void* pointer_adjusted;
-			void* dx_adjusted;
-			void* id_adjusted;
-			void* data_adjusted;
+			void* pointer_adjusted = nullptr;
+			void* dx_adjusted = nullptr;
+			void* id_adjusted = nullptr;
+			void* data_adjusted = nullptr;
 			bool result = attempt_alloc_unique(L,
 			     std::alignment_of_v<T*>,
 			     sizeof(T*),
