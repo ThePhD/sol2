@@ -7,6 +7,7 @@ Containers are objects that are meant to be inspected and iterated and whose job
 * Containers from C++ are stored as ``userdata`` with special ``usertype`` metatables with :ref:`special operations<container-operations>`
 	- In Lua 5.1, this means containers pushed without wrappers like :doc:`as_table<api/as_table>` and :doc:`nested<api/nested>` will not work with ``pairs`` or other built-in iteration functions from Lua
 		+ Lua 5.2+ will behave just fine (does not include LuaJIT 2.0.x)
+                + If this behaviour is needed using LuaJIT, the compilation flag `LUAJIT_ENABLE_LUA52COMPAT` can be used.
 	- You must push containers into C++ by returning them directly and getting/setting them directly, and they will have a type of ``sol::type::userdata`` and treated like a usertype
 * Containers can be manipulated from both C++ and Lua, and, like userdata, will `reflect changes if you use a reference`_ to the data.
 * This means containers **do not automatically serialize as Lua tables**
