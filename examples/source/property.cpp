@@ -15,7 +15,7 @@ public:
 	}
 
 	int get_max_hp() const {
-		return hp;
+		return maxhp;
 	}
 
 	void set_max_hp(int value) {
