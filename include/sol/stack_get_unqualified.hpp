@@ -257,6 +257,10 @@ namespace sol { namespace stack {
 					return static_cast<actual>(r);
 				}
 			}
+			else if constexpr (!std::is_reference_v<X> && meta::is_specialization_of_v<X, nested>) {
+				using NestedX = typename meta::unqualified_t<X>::nested_type;
+				return stack_detail::unchecked_unqualified_get<NestedX>(L, index, tracking);
+			}
 			else {
 				return stack_detail::unchecked_unqualified_get<Tu>(L, index, tracking);
 			}
