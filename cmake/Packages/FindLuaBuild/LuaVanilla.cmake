@@ -103,20 +103,20 @@ if (LUA_VANILLA_VERSION MATCHES "^5\\.1")
 		lbaselib.c ldblib.c liolib.c lmathlib.c loslib.c ltablib.c 
 		lstrlib.c loadlib.c linit.c)
 	set(LUA_VANILLA_LUA_SOURCES lua.c )
-if (LUA_BUILD_LUA_COMPILER)
-	set(LUA_VANILLA_LUAC_SOURCES luac.c print.c )
-endif()
+	if (LUA_BUILD_LUA_COMPILER)
+		set(LUA_VANILLA_LUAC_SOURCES luac.c print.c)
+	endif()
 	set(LUA_VANILLA_GENERATE_LUA_HPP true)
 elseif (LUA_VANILLA_VERSION MATCHES "^5\\.2")
-	set(LUA_VANILLA_LIB_SOURCES lapi.c lcode.c lctype.c ldebug.c ldo.c ldump.c 
+	set(LUA_VANILLA_LIB_SOURCES lapi.c lbitlib.c lcode.c lctype.c ldebug.c ldo.c ldump.c 
 		lfunc.c lgc.c llex.c lmem.c lobject.c lopcodes.c lparser.c 
 		lstate.c lstring.c ltable.c ltm.c lundump.c lvm.c lzio.c
 		lauxlib.c lbaselib.c lcorolib.c ldblib.c liolib.c 
 		lmathlib.c loslib.c lstrlib.c ltablib.c loadlib.c linit.c)
-	set(LUA_VANILLA_LUA_SOURCES lua.c )
-if (LUA_BUILD_LUA_COMPILER)
-	set(LUA_VANILLA_LUAC_SOURCES luac.c )
-endif()
+	set(LUA_VANILLA_LUA_SOURCES lua.c)
+	if (LUA_BUILD_LUA_COMPILER)
+		set(LUA_VANILLA_LUAC_SOURCES luac.c)
+	endif()
 	set(LUA_VANILLA_GENERATE_LUA_HPP false)
 elseif (LUA_VANILLA_VERSION MATCHES "^5\\.3")
 	set(LUA_VANILLA_LIB_SOURCES lapi.c lcode.c lctype.c ldebug.c ldo.c ldump.c 
@@ -125,9 +125,9 @@ elseif (LUA_VANILLA_VERSION MATCHES "^5\\.3")
 		lbaselib.c lbitlib.c lcorolib.c ldblib.c liolib.c lmathlib.c 
 		loslib.c lstrlib.c ltablib.c lutf8lib.c loadlib.c linit.c)
 	set(LUA_VANILLA_LUA_SOURCES lua.c )
-if (LUA_BUILD_LUA_COMPILER)
-	set(LUA_VANILLA_LUAC_SOURCES luac.c )
-endif()
+	if (LUA_BUILD_LUA_COMPILER)
+		set(LUA_VANILLA_LUAC_SOURCES luac.c)
+	endif()
 	set(LUA_VANILLA_GENERATE_LUA_HPP false)
 elseif (LUA_VANILLA_VERSION MATCHES "^5\\.4")
 	if (LUA_VANILLA_VERSION MATCHES "work" OR LUA_VANILLA_VERSION MATCHES "alpha"  OR LUA_VANILLA_VERSION MATCHES "beta")
@@ -138,10 +138,10 @@ elseif (LUA_VANILLA_VERSION MATCHES "^5\\.4")
 		llex.c lmathlib.c lmem.c loadlib.c lobject.c lopcodes.c loslib.c
 		lparser.c lstate.c lstring.c lstrlib.c ltable.c ltablib.c ltm.c lundump.c
 		lutf8lib.c lvm.c lzio.c)
-	set(LUA_VANILLA_LUA_SOURCES lua.c )
-if (LUA_BUILD_LUA_COMPILER)
-	set(LUA_VANILLA_LUAC_SOURCES luac.c )
-endif()
+	set(LUA_VANILLA_LUA_SOURCES lua.c)
+	if (LUA_BUILD_LUA_COMPILER)
+		set(LUA_VANILLA_LUAC_SOURCES luac.c)
+	endif()
 	set(LUA_VANILLA_GENERATE_LUA_HPP false)
 else()
 	MESSAGE(WARNING "Using Lua 5.4.4 file list for ${LUA_VERSION} version")
@@ -150,10 +150,10 @@ else()
 		llex.c lmathlib.c lmem.c loadlib.c lobject.c lopcodes.c loslib.c
 		lparser.c lstate.c lstring.c lstrlib.c ltable.c ltablib.c ltm.c lundump.c
 		lutf8lib.c lvm.c lzio.c)
-	set(LUA_VANILLA_LUA_SOURCES lua.c )
-if (LUA_BUILD_LUA_COMPILER)
-	set(LUA_VANILLA_LUAC_SOURCES luac.c )
-endif()
+	set(LUA_VANILLA_LUA_SOURCES lua.c)
+	if (LUA_BUILD_LUA_COMPILER)
+		set(LUA_VANILLA_LUAC_SOURCES luac.c)
+	endif()
 	set(LUA_VANILLA_GENERATE_LUA_HPP false)
 endif()
 
@@ -217,6 +217,7 @@ set(luacompiler "luac-${LUA_VANILLA_VERSION}")
 # make an actual, buildable target
 # that other parts of the code can depend on
 add_library(${liblua} ${LUA_BUILD_LIBRARY_TYPE} ${LUA_VANILLA_LIB_SOURCES})
+add_library(Lua::Lua ALIAS ${liblua})
 set_target_properties(${liblua}
 	PROPERTIES
 	LANGUAGE ${LUA_VANILLA_LANGUAGE}
@@ -233,7 +234,9 @@ set_source_files_properties(${LUA_VANILLA_LIB_SOURCES}
 target_include_directories(${liblua}
 	PUBLIC "${LUA_VANILLA_INCLUDE_DIRS}")
 target_compile_definitions(${liblua}
-	PUBLIC LUA_COMPAT_ALL ${LUA_VANILLA_DLL_DEFINE})
+	PUBLIC
+		LUA_COMPAT_ALL
+		${LUA_VANILLA_DLL_DEFINE})
 if (MSVC)
 	target_compile_options(${liblua}
 		PRIVATE /W1)

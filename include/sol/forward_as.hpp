@@ -21,39 +21,24 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include <catch2/catch_all.hpp>
+#ifndef SOL_FORWARD_AS_HPP
+#define SOL_FORWARD_AS_HPP
 
-#include <sol/sol.hpp>
+#include <sol/version.hpp>
 
-#if SOL_TESTS_SIZEOF_VOID_P == 4
+#include <utility>
+#include <type_traits>
 
-inline namespace sol2_regression_test_1192 {
-	struct Test {
-		std::uint64_t dummy;
-	};
-
-	struct alignas(1024) Test2 {
-		char dummy[1024];
-	};
-} // namespace sol2_regression_test_1192
-
-TEST_CASE("issue #1192 - alignment test should not fail for strangely-aligned / over-aligned objects", "[sol2][regression][issue1192]") {
-	sol::state lua;
-
-	static_assert(sizeof(Test) == 8);
-	static_assert(alignof(Test) == 8);
-	static_assert(sizeof(Test*) == 4);
-	static_assert(alignof(Test*) == 4);
-
-	/// [sol2] An error occurred and panic has been invoked: aligned allocation of userdata block (data section) for 'sol2_regression_test_1192::Test'
-	/// failed Note: may not panic depending on alignment of local variable `alignment_shim` in sol::detail::aligned_space_for
-	lua["test"] = Test {};
-
-	// Test also unique and over-aligned userdata
-	lua["test"] = std::make_unique<Test>();
-	lua["test"] = Test2 {};
-
-	return 0;
+namespace sol {
+	template <typename T, typename U>
+	constexpr decltype(auto) forward_as(U&& value) noexcept {
+		if constexpr (::std::is_lvalue_reference_v<T>) {
+			return value;
+		}
+		else {
+			return ::std::move(value);
+		}
+	}
 }
 
-#endif
+#endif // SOL_FORWARD_AS_HPP

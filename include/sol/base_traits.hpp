@@ -62,6 +62,39 @@ namespace sol {
 		template <template <class...> class Trait, class... Args>
 		constexpr inline bool is_detected_v = is_detected<Trait, Args...>::value;
 
+		template <typename _Default, typename _Void, template <typename...> typename _Op, typename... _Args>
+		class detector {
+		public:
+			using value_t = ::std::false_type;
+			using type = _Default;
+		};
+
+		template <typename _Default, template <typename...> typename _Op, typename... _Args>
+		class detector<_Default, void_t<_Op<_Args...>>, _Op, _Args...> {
+		public:
+			using value_t = ::std::true_type;
+			using type = _Op<_Args...>;
+		};
+
+		class nonesuch {
+		public:
+			~nonesuch() = delete;
+			nonesuch(nonesuch const&) = delete;
+			nonesuch& operator=(nonesuch const&) = delete;
+		};
+
+		template <template <typename...> typename _Op, typename... _Args>
+		using detected_t = typename detector<nonesuch, void, _Op, _Args...>::type;
+
+		template <typename _Default, template <typename...> typename _Op, typename... _Args>
+		using detected_or = detector<_Default, void, _Op, _Args...>;
+
+		template <typename _Default, template <typename...> typename _Op, typename... _Args>
+		using detected_or_t = typename detector<_Default, void, _Op, _Args...>::type;
+
+		template <typename _Default, template <typename...> typename _Op, typename... _Args>
+		constexpr inline bool detected_or_v = detector<_Default, void, _Op, _Args...>::value;
+
 		template <std::size_t I>
 		using index_value = std::integral_constant<std::size_t, I>;
 

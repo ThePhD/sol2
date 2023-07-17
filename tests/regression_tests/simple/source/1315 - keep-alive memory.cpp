@@ -49,7 +49,7 @@ inline namespace sol2_regression_test_1315 {
 } // namespace sol2_regression_test_1315
 
 
-TEST_CASE("Test for Issue #1315 - memory keep-alive with iteration functions, using a pointer", "[sol2][regression][Issue-1315][pointer]") {
+TEST_CASE("issue #1315 - memory keep-alive with iteration functions, using a pointer", "[sol2][regression][issue1315][pointer]") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::coroutine);
 

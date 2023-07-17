@@ -59,7 +59,7 @@ ExternalProject_Add(LUABRIDGE_BUILD_SOURCE
 add_library(${luabridge_lib} INTERFACE)
 add_dependencies(${luabridge_lib} LUABRIDGE_BUILD_SOURCE)
 target_include_directories(${luabridge_lib} INTERFACE ${luabridge_include_dirs})
-target_link_libraries(${luabridge_lib} INTERFACE ${LUA_LIBRARIES})
+target_link_libraries(${luabridge_lib} INTERFACE Lua::Lua)
 if (NOT MSVC)
 	target_compile_options(${luabridge_lib} INTERFACE
 		-Wno-noexcept-type -Wno-ignored-qualifiers -Wno-unused-parameter)

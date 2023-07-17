@@ -30,7 +30,7 @@ function (make_luwra_interop_example target_library example_suffix)
 	
 	add_executable(${example_name} source/luwra.cpp)
 	target_link_libraries(${example_name} 
-		PRIVATE ${LUA_LIBRARIES} ${LUWRA_LIBRARIES} 
+		PRIVATE Lua::Lua ${LUWRA_LIBRARIES} 
 		${target_library} ${CMAKE_DL_LIBS})
 
 	if (MSVC)

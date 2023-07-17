@@ -65,7 +65,7 @@ set_target_properties(${toluapp_lib} PROPERTIES
 	POSITION_INDEPENDENT_CODE TRUE)
 target_include_directories(${toluapp_lib}
 	PUBLIC ${toluapp_include_dirs})
-target_link_libraries(${toluapp_lib} PRIVATE ${LUA_LIBRARIES} ${CMAKE_DL_LIBS})
+target_link_libraries(${toluapp_lib} PRIVATE Lua::Lua ${CMAKE_DL_LIBS})
 if (MSVC)
 	target_compile_options(${toluapp_lib}
 		PRIVATE /W1)

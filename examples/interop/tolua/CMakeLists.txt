@@ -31,7 +31,7 @@ function(make_tolua_interop_example target_library example_suffix)
 	add_executable(${example_name} source/tolua.cpp)
 	target_link_libraries(${example_name} 
 		PRIVATE
-		${LUA_LIBRARIES} ${TOLUAPP_LIBRARIES} ${target_library} ${CMAKE_DL_LIBS})
+		Lua::Lua ${TOLUAPP_LIBRARIES} ${target_library} ${CMAKE_DL_LIBS})
 	
 	if (MSVC)
 		target_compile_options(${example_name}

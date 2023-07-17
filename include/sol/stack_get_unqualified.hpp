@@ -32,6 +32,7 @@
 #include <sol/overload.hpp>
 #include <sol/error.hpp>
 #include <sol/unicode.hpp>
+#include <sol/abort.hpp>
 
 #include <memory>
 #include <functional>
@@ -212,11 +213,9 @@ namespace sol { namespace stack {
 				}
 				actual r {};
 				if constexpr (!derive<element>::value) {
-#if SOL_IS_ON(SOL_DEBUG_BUILD)
 					// In debug mode we would rather abort you for this grave failure rather
 					// than let you deref a null pointer and fuck everything over
-					std::abort();
-#endif
+					SOL_DEBUG_ABORT();
 					return static_cast<actual>(std::move(r));
 				}
 				else {
@@ -249,11 +248,7 @@ namespace sol { namespace stack {
 						// uh oh..
 						break;
 					}
-#if SOL_IS_ON(SOL_DEBUG_BUILD)
-					// In debug mode we would rather abort you for this grave failure rather
-					// than let you deref a null pointer and fuck everything over
-					std::abort();
-#endif
+					SOL_DEBUG_ABORT();
 					return static_cast<actual>(r);
 				}
 			}

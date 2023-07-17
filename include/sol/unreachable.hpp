@@ -21,39 +21,17 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include <catch2/catch_all.hpp>
+#ifndef SOL_UNREACHABLE_HPP
+#define SOL_UNREACHABLE_HPP
 
-#include <sol/sol.hpp>
+#include <sol/version.hpp>
 
-#if SOL_TESTS_SIZEOF_VOID_P == 4
-
-inline namespace sol2_regression_test_1192 {
-	struct Test {
-		std::uint64_t dummy;
-	};
-
-	struct alignas(1024) Test2 {
-		char dummy[1024];
-	};
-} // namespace sol2_regression_test_1192
-
-TEST_CASE("issue #1192 - alignment test should not fail for strangely-aligned / over-aligned objects", "[sol2][regression][issue1192]") {
-	sol::state lua;
-
-	static_assert(sizeof(Test) == 8);
-	static_assert(alignof(Test) == 8);
-	static_assert(sizeof(Test*) == 4);
-	static_assert(alignof(Test*) == 4);
-
-	/// [sol2] An error occurred and panic has been invoked: aligned allocation of userdata block (data section) for 'sol2_regression_test_1192::Test'
-	/// failed Note: may not panic depending on alignment of local variable `alignment_shim` in sol::detail::aligned_space_for
-	lua["test"] = Test {};
-
-	// Test also unique and over-aligned userdata
-	lua["test"] = std::make_unique<Test>();
-	lua["test"] = Test2 {};
-
-	return 0;
-}
+#if SOL_HAS_BUILTIN_I_(__builtin_unreachable)
+#define SOL_UNREACHABLE() __builtin_unreachable();
+#elif SOL_IS_ON(SOL_COMPILER_VCXX)
+#define SOL_UNREACHABLE() __assume(false);
+#else
+#define SOL_UNREACHABLE() __builtin_unreachable();
+#endif
 
 #endif

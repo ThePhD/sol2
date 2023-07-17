@@ -27,7 +27,7 @@
 
 #include <string>
 
-TEST_CASE("Test for Issue #1266 - add method in Lua 5.4 exposes freelist in table, unfortunately", "[sol2][regression][Issue-1266]") {
+TEST_CASE("issue #1266 - add method in Lua 5.4 exposes freelist in table, unfortunately", "[sol2][regression][issue1266]") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 

@@ -24,15 +24,15 @@
 
 # # Dependencies
 FetchContent_Declare(
-	catch2
+	Catch2
 	GIT_REPOSITORY https://github.com/catchorg/Catch2.git
 	GIT_TAG devel
 )
-FetchContent_MakeAvailable(catch2)
+FetchContent_MakeAvailable(Catch2)
 
 function(sol2_add_test_properties target-name)
 	target_link_libraries(${target-name}
-		PUBLIC Threads::Threads ${LUA_LIBRARIES} Catch2::Catch2 ${CMAKE_DL_LIBS})
+		PUBLIC Threads::Threads Lua::Lua Catch2::Catch2 ${CMAKE_DL_LIBS})
 	target_compile_definitions(${target-name}
 		PUBLIC SOL_PRINT_ERRORS=1)
 	target_compile_options(${target-name}
@@ -84,6 +84,7 @@ endfunction()
 
 add_subdirectory(inclusion)
 add_subdirectory(container_exhaustive)
+add_subdirectory(coroutines)
 add_subdirectory(enum)
 add_subdirectory(environment)
 add_subdirectory(exceptions)

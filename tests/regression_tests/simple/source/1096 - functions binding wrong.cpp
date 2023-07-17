@@ -35,7 +35,7 @@ inline namespace sol2_regression_test_1096 {
 	}
 } // namespace sol2_regression_test_1096
 
-TEST_CASE("Test for Issue #1096 - checking different functions/lambdas/structures bind as intendedcorrectly", "[sol2][regression][Issue-1096]") {
+TEST_CASE("issue #1096 - checking different functions/lambdas/structures bind as intendedcorrectly", "[sol2][regression][issue1096]") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 

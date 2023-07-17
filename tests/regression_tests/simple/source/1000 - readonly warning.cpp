@@ -34,7 +34,7 @@ inline namespace sol2_regression_test_1000 {
 	};
 } // namespace sol2_regression_test_1000
 
-TEST_CASE("Test for Issue #1000 - readonly warning", "[sol2][regression][Issue-1000]") {
+TEST_CASE("issue #1000 - readonly warning", "[sol2][regression][issue1000]") {
 	sol::state lua;
 	lua.create_named_table("t");
 

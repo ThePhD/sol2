@@ -25,7 +25,7 @@
 
 #include <sol/sol.hpp>
 
-TEST_CASE("Test for Issue #1211 - default-constructed protected_function_result should destruct fine", "[sol2][regression][Issue-1211]") {
+TEST_CASE("issue #1211 - default-constructed protected_function_result should destruct fine", "[sol2][regression][issue1211]") {
 	{
 		// Should destruct properly, without issue.
 		[[maybe_unused]] sol::protected_function_result let_die;

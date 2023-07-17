@@ -21,39 +21,27 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include <catch2/catch_all.hpp>
+#ifndef SOL_ABORT_HPP
+#define SOL_ABORT_HPP
 
-#include <sol/sol.hpp>
+#include <sol/version.hpp>
 
-#if SOL_TESTS_SIZEOF_VOID_P == 4
+#include <sol/base_traits.hpp>
 
-inline namespace sol2_regression_test_1192 {
-	struct Test {
-		std::uint64_t dummy;
-	};
+#include <cstdlib>
 
-	struct alignas(1024) Test2 {
-		char dummy[1024];
-	};
-} // namespace sol2_regression_test_1192
-
-TEST_CASE("issue #1192 - alignment test should not fail for strangely-aligned / over-aligned objects", "[sol2][regression][issue1192]") {
-	sol::state lua;
-
-	static_assert(sizeof(Test) == 8);
-	static_assert(alignof(Test) == 8);
-	static_assert(sizeof(Test*) == 4);
-	static_assert(alignof(Test*) == 4);
-
-	/// [sol2] An error occurred and panic has been invoked: aligned allocation of userdata block (data section) for 'sol2_regression_test_1192::Test'
-	/// failed Note: may not panic depending on alignment of local variable `alignment_shim` in sol::detail::aligned_space_for
-	lua["test"] = Test {};
-
-	// Test also unique and over-aligned userdata
-	lua["test"] = std::make_unique<Test>();
-	lua["test"] = Test2 {};
-
-	return 0;
-}
-
+// clang-format off
+#if SOL_IS_ON(SOL_DEBUG_BUILD)
+	#if SOL_IS_ON(SOL_COMPILER_VCXX)
+		#define SOL_DEBUG_ABORT() \
+			if (true) { ::std::abort(); } \
+			static_assert(true, "")
+	#else
+		#define SOL_DEBUG_ABORT() ::std::abort()
+	#endif
+#else
+	#define SOL_DEBUG_ABORT() static_assert(true, "")
 #endif
+// clang-format on
+
+#endif // SOL_ABORT_HPP

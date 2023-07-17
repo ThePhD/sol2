@@ -24,7 +24,7 @@
 
 function(sol2_add_example_properties target-name)
 	target_link_libraries(${target-name}
-		PUBLIC Threads::Threads ${LUA_LIBRARIES} ${CMAKE_DL_LIBS})
+		PUBLIC Threads::Threads Lua::Lua ${CMAKE_DL_LIBS})
 	target_compile_definitions(${target-name}
 		PUBLIC SOL_PRINT_ERRORS=1)
 	target_compile_options(${target-name}

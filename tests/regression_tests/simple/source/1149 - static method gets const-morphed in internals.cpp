@@ -36,7 +36,7 @@ inline namespace sol2_regression_test_1149 {
 	};
 } // namespace sol2_regression_test_1149
 
-TEST_CASE("Test for Issue #1149 - static method should not be morphed to const and error internally", "[sol2][regression][Issue-1149]") {
+TEST_CASE("issue #1149 - static method should not be morphed to const and error internally", "[sol2][regression][issue1149]") {
 	sol::state lua = {};
 	auto T = lua.new_usertype<Test>("Test");
 	// Does compile ok.

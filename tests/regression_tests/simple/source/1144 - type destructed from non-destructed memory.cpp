@@ -40,7 +40,7 @@ inline namespace sol2_regression_test_1144 {
 	}
 } // namespace sol2_regression_test_1144
 
-TEST_CASE("Test for Issue #1144 -", "[sol2][regression][Issue-1144]") {
+TEST_CASE("issue #1144 -", "[sol2][regression][issue1144]") {
 	sol::state state;
 	bind_class(state);
 	sol::protected_function_result pr = state.do_string("local a = MyClass();");

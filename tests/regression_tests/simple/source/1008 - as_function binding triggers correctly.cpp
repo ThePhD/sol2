@@ -25,7 +25,7 @@
 
 #include <sol/sol.hpp>
 
-TEST_CASE("Test for Issue #1008 - as_function binding must trigger correctly", "[sol2][regression][Issue-1008]") {
+TEST_CASE("issue #1008 - as_function binding must trigger correctly", "[sol2][regression][issue1008]") {
 	sol::state lua;
 	lua.create_named_table("t");
 
