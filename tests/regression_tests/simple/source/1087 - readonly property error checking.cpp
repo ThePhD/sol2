@@ -31,7 +31,7 @@ inline namespace sol2_regression_test_1087 {
 	};
 } // namespace sol2_regression_test_1087
 
-TEST_CASE("Test for Issue #1087 - readonly property error checking", "[sol2][regression][Issue-1087]") {
+TEST_CASE("issue #1087 - readonly property error checking", "[sol2][regression][issue1087]") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 	lua.new_usertype<MyStruct>("MyStruct", "prop", sol::readonly_property(&MyStruct::prop));

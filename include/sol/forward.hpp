@@ -30,7 +30,7 @@
 #include <type_traits>
 #include <string_view>
 
-#if SOL_IS_ON(SOL_USE_CXX_LUA) || SOL_IS_ON(SOL_USE_CXX_LUAJIT)
+#if SOL_IS_ON(SOL_USING_CXX_LUA) || SOL_IS_ON(SOL_USING_CXX_LUAJIT)
 struct lua_State;
 #else
 extern "C" {
@@ -253,7 +253,7 @@ namespace sol {
 			typedef ::sol::types<__VA_ARGS__> type; \
 		};                                           \
 	}                                                 \
-	void a_sol3_detail_function_decl_please_no_collide()
+	static_assert(true, "")
 #define SOL_DERIVED_CLASSES(T, ...)                    \
 	namespace sol {                                   \
 		template <>                                  \
@@ -261,6 +261,6 @@ namespace sol {
 			typedef ::sol::types<__VA_ARGS__> type; \
 		};                                           \
 	}                                                 \
-	void a_sol3_detail_function_decl_please_no_collide()
+	static_assert(true, "")
 
 #endif // SOL_FORWARD_HPP

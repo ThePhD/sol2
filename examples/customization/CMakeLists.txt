@@ -50,7 +50,7 @@ function (MAKE_CUSTOMIZATION_EXAMPLE example_suffix target_sol)
 	endif()
 
 	target_link_libraries(${customization_example_name}
-		PRIVATE Threads::Threads ${target_sol} ${LUA_LIBRARIES})
+		PRIVATE Threads::Threads ${target_sol} Lua::Lua)
 	target_include_directories(${customization_example_name}
 		PRIVATE include)
 endfunction()

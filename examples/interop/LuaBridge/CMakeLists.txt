@@ -30,7 +30,7 @@ function (make_luabridge_interop_example target_library example_suffix)
 	
 	add_executable(${example_name} source/LuaBridge.cpp)
 	target_link_libraries(${example_name} 
-		PRIVATE ${LUA_LIBRARIES} ${LUABRIDGE_LIBRARIES} 
+		PRIVATE Lua::Lua ${LUABRIDGE_LIBRARIES} 
 		${target_library} ${CMAKE_DL_LIBS})
 
 	if (MSVC)

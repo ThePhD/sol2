@@ -46,7 +46,7 @@ function(make_require_from_dll_example target_lib example_lib_name_suffix)
 		PUBLIC MY_OBJECT_DLL 
 		PRIVATE MY_OBJECT_BUILD)
 	target_link_libraries(${example_lib_name}
-		PUBLIC ${target_lib} ${LUA_LIBRARIES} ${CMAKE_DL_LIBS})
+		PUBLIC ${target_lib} Lua::Lua ${CMAKE_DL_LIBS})
 	target_include_directories(${example_lib_name}
 		PUBLIC "${LUA_INCLUDE_DIRS}")
 	
@@ -83,7 +83,7 @@ function(make_require_from_dll_example target_lib example_lib_name_suffix)
 	# add executable target that represents require_from_dll program
 	add_executable(${example_name} ${require_from_dll_sources})
 	target_link_libraries(${example_name}
-		PRIVATE my_object ${LUA_LIBRARIES} ${target_lib} ${CMAKE_DL_LIBS})
+		PRIVATE my_object Lua::Lua ${target_lib} ${CMAKE_DL_LIBS})
 	target_include_directories(${example_name}
 		PRIVATE ${LUA_INCLUDE_DIRS})
 

@@ -88,11 +88,11 @@ end
 		REQUIRE(r.valid());
 	}
 	{
-		auto r = lua.safe_script("c[Issue-c + 1] = 18", sol::script_pass_on_error);
+		auto r = lua.safe_script("c[issuec + 1] = 18", sol::script_pass_on_error);
 		REQUIRE(r.valid());
 	}
 	{
-		auto r = lua.safe_script("v3 = c[Issue-c]", sol::script_pass_on_error);
+		auto r = lua.safe_script("v3 = c[issuec]", sol::script_pass_on_error);
 		REQUIRE(r.valid());
 	}
 	auto backit = items.begin();

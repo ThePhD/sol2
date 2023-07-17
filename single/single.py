@@ -107,10 +107,10 @@ intro = """// The MIT License (MIT)
 """
 
 includes = set([])
-standard_include = re.compile(r'#include <(.*?)>')
-local_include = re.compile(r'#(\s*?)include "(.*?)"')
-project_include = re.compile(r'#(\s*?)include <(sol/.*?)>')
-project_config_include = re.compile(r'#(\s*?)include <sol/config.hpp>')
+standard_include = re.compile(r'\s*#include <(.*?)>')
+local_include = re.compile(r'\s*#(\s*?)include "(.*?)"')
+project_include = re.compile(r'\s*#(\s*?)include <(sol/.*?)>')
+project_config_include = re.compile(r'\s*#(\s*?)include <sol/config.hpp>')
 pragma_once_cpp = re.compile(r'(\s*)#(\s*)pragma(\s+)once')
 ifndef_cpp = re.compile(r'#ifndef SOL_.*?_HPP')
 define_cpp = re.compile(r'#define SOL_.*?_HPP')
@@ -223,9 +223,9 @@ def process_file(filename, out):
 
 version = get_version()
 revision = get_revision()
-include_guard = 'SOL_SINGLE_INCLUDE_HPP'
-forward_include_guard = 'SOL_SINGLE_INCLUDE_FORWARD_HPP'
-config_include_guard = 'SOL_SINGLE_CONFIG_HPP'
+include_guard = 'SOL_SINGLE_INCLUDE_SOL_HPP'
+forward_include_guard = 'SOL_SINGLE_INCLUDE_SOL_FORWARD_HPP'
+config_include_guard = 'SOL_SINGLE_SOL_CONFIG_HPP'
 
 processed_files = [os.path.join(script_path, x) for x in ['sol/sol.hpp']]
 forward_processed_files = [

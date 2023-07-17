@@ -25,7 +25,7 @@
 
 #include <sol/sol.hpp>
 
-TEST_CASE("Test for Issue #1067 - as_function binding not triggering properly", "[sol2][regression][Issue-1067]") {
+TEST_CASE("issue #1067 - as_function binding not triggering properly", "[sol2][regression][issue1067]") {
 	sol::state lua;
 
 	lua.open_libraries(sol::lib::base);

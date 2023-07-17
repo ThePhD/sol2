@@ -59,7 +59,7 @@ ExternalProject_Add(LUWRA_BUILD_SOURCE
 add_library(${luwra_lib} INTERFACE)
 add_dependencies(${luwra_lib} LUWRA_BUILD_SOURCE)
 target_include_directories(${luwra_lib} INTERFACE ${luwra_include_dirs})
-target_link_libraries(${luwra_lib} INTERFACE ${LUA_LIBRARIES})
+target_link_libraries(${luwra_lib} INTERFACE Lua::Lua)
 if (NOT MSVC)
 	target_compile_options(${luwra_lib} INTERFACE
 		-Wno-noexcept-type -Wno-ignored-qualifiers -Wno-unused-parameter)

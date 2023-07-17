@@ -89,6 +89,14 @@
 	#include <climits>
 #endif
 
+#if defined(SOL_HAS_BUILTIN)
+	#define SOL_HAS_BUILTIN_I_(...) SOL_HAS_BUILTIN(__VA_ARGS__)
+#elif defined(__has_builtin)
+	#define SOL_HAS_BUILTIN_I_(...) __has_builtin(__VA_ARGS__)
+#else
+	#define SOL_HAS_BUILTIN_I_(...) 0
+#endif
+
 #if defined(SOL_COMPILER_VCXX)
 	#if defined(SOL_COMPILER_VCXX != 0)
 		#define SOL_COMPILER_VCXX_I_ SOL_ON
@@ -638,34 +646,35 @@
 
 #if defined(SOL_USING_CXX_LUA)
 	#if (SOL_USING_CXX_LUA != 0)
-		#define SOL_USE_CXX_LUA_I_ SOL_ON
+		#define SOL_USING_CXX_LUA_I_ SOL_ON
 	#else
-		#define SOL_USE_CXX_LUA_I_ SOL_OFF
+		#define SOL_USING_CXX_LUA_I_ SOL_OFF
 	#endif
 #elif defined(SOL_USE_CXX_LUA)
+	// alternative spelling
 	#if (SOL_USE_CXX_LUA != 0)
-		#define SOL_USE_CXX_LUA_I_ SOL_ON
+		#define SOL_USING_CXX_LUA_I_ SOL_ON
 	#else
-		#define SOL_USE_CXX_LUA_I_ SOL_OFF
+		#define SOL_USING_CXX_LUA_I_ SOL_OFF
 	#endif
 #else
-	#define SOL_USE_CXX_LUA_I_ SOL_DEFAULT_OFF
+	#define SOL_USING_CXX_LUA_I_ SOL_DEFAULT_OFF
 #endif
 
 #if defined(SOL_USING_CXX_LUAJIT)
-	#if (SOL_USING_CXX_LUA != 0)
-		#define SOL_USE_CXX_LUAJIT_I_ SOL_ON
+	#if (SOL_USING_CXX_LUAJIT != 0)
+		#define SOL_USING_CXX_LUAJIT_I_ SOL_ON
 	#else
-		#define SOL_USE_CXX_LUAJIT_I_ SOL_OFF
+		#define SOL_USING_CXX_LUAJIT_I_ SOL_OFF
 	#endif
 #elif defined(SOL_USE_CXX_LUAJIT)
-	#if (SOL_USE_CXX_LUA != 0)
-		#define SOL_USE_CXX_LUAJIT_I_ SOL_ON
+	#if (SOL_USE_CXX_LUAJIT != 0)
+		#define SOL_USING_CXX_LUAJIT_I_ SOL_ON
 	#else
-		#define SOL_USE_CXX_LUAJIT_I_ SOL_OFF
+		#define SOL_USING_CXX_LUAJIT_I_ SOL_OFF
 	#endif
 #else
-	#define SOL_USE_CXX_LUAJIT_I_ SOL_DEFAULT_OFF
+	#define SOL_USING_CXX_LUAJIT_I_ SOL_DEFAULT_OFF
 #endif
 
 #if defined(SOL_NO_LUA_HPP)
@@ -674,7 +683,7 @@
 	#else
 		#define SOL_USE_LUA_HPP_I_ SOL_ON
 	#endif
-#elif defined(SOL_USING_CXX_LUA)
+#elif SOL_IS_ON(SOL_USING_CXX_LUA)
 	#define SOL_USE_LUA_HPP_I_ SOL_OFF
 #elif defined(__has_include)
 	#if __has_include(<lua.hpp>)

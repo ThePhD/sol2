@@ -25,7 +25,7 @@
 
 #include <sol/sol.hpp>
 
-TEST_CASE("Test for Issue #1072 - capture exception propagation", "[sol2][regression][Issue-1072]") {
+TEST_CASE("issue #1072 - capture exception propagation", "[sol2][regression][issue1072]") {
 	auto lua = sol::state {};
 	// If you remove the capture, the problem goes away.
 	lua["foo"] = [&] { throw std::runtime_error(""); };

@@ -387,8 +387,8 @@ function f_fill(vec)
 end
 function f_append(vec)
 	print("#vec in lua: " .. #vec)
-	vec[Issue-vec] = -10456407
-	vec[Issue-vec + 1] = -54
+	vec[issuevec] = -10456407
+	vec[issuevec + 1] = -54
 	print("#vec in lua: " .. #vec)
 end
 )",

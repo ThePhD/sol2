@@ -28,7 +28,7 @@
 #include <iostream>
 #include <string>
 
-TEST_CASE("Test for Issue #1095 - raw_get from global table should NOT fail at all", "[sol2][regression][Issue-1095]") {
+TEST_CASE("issue #1095 - raw_get from global table should NOT fail at all", "[sol2][regression][issue1095]") {
 	const std::string magic_value = "test_value";
 
 	sol::state lua;

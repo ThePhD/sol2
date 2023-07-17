@@ -34,18 +34,18 @@
 
 #if SOL_IS_ON(SOL_USE_COMPATIBILITY_LAYER)
 
-#if SOL_IS_ON(SOL_USE_CXX_LUA) || SOL_IS_ON(SOL_USE_CXX_LUAJIT)
-#ifndef COMPAT53_LUA_CPP
-#define COMPAT53_LUA_CPP 1
-#endif // Build Lua Compat layer as C++
+// clang-format off
+#if SOL_IS_ON(SOL_USING_CXX_LUA) || SOL_IS_ON(SOL_USING_CXX_LUAJIT)
+	#ifndef COMPAT53_LUA_CPP
+		#define COMPAT53_LUA_CPP 1
+	#endif // Build Lua Compat layer as C++
 #endif
-#ifndef COMPAT53_INCLUDE_SOURCE
-#define COMPAT53_INCLUDE_SOURCE 1
-#endif // Build Compat Layer Inline
-
-#include <sol/compatibility/compat-5.3.h>
-#include <sol/compatibility/compat-5.4.h>
-
+	#ifndef COMPAT53_INCLUDE_SOURCE
+		#define COMPAT53_INCLUDE_SOURCE 1
+	#endif // Build Compat Layer Inline
+	#include <sol/compatibility/compat-5.3.h>
+	#include <sol/compatibility/compat-5.4.h>
 #endif
+// clang-format on
 
 #endif // SOL_COMPATIBILITY_HPP

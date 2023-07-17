@@ -28,7 +28,7 @@
 
 // clang-format off
 
-#if SOL_IS_ON(SOL_USE_CXX_LUA)
+#if SOL_IS_ON(SOL_USING_CXX_LUA)
 	#include <lua.h>
 	#include <lualib.h>
 	#include <lauxlib.h>
@@ -54,7 +54,7 @@
 	#define SOL_USE_LUAJIT_I_ SOL_DEFAULT_OFF
 #endif // luajit
 
-#if SOL_IS_ON(SOL_USE_CXX_LUAJIT)
+#if SOL_IS_ON(SOL_USING_CXX_LUAJIT)
 	#include <luajit.h>
 #elif SOL_IS_ON(SOL_USE_LUAJIT)
 	extern "C" {
@@ -146,9 +146,9 @@
 #else
 	#if SOL_IS_ON(SOL_USE_LUAJIT)
 		#define SOL_EXCEPTIONS_CATCH_ALL_I_ SOL_DEFAULT_OFF
-	#elif SOL_IS_ON(SOL_USE_CXX_LUAJIT)
+	#elif SOL_IS_ON(SOL_USING_CXX_LUAJIT)
 		#define SOL_EXCEPTIONS_CATCH_ALL_I_ SOL_DEFAULT_OFF
-	#elif SOL_IS_ON(SOL_USE_CXX_LUA)
+	#elif SOL_IS_ON(SOL_USING_CXX_LUA)
 		#define SOL_EXCEPTIONS_CATCH_ALL_I_ SOL_DEFAULT_OFF
 	#else
 		#define SOL_EXCEPTIONS_CATCH_ALL_I_ SOL_DEFAULT_ON
@@ -192,7 +192,11 @@
 #else
 	// Lua 5.2 only (deprecated in 5.3 (503)) (Can be turned on with Compat flags)
 	// Lua 5.2, or other versions of Lua with the compat flag, or Lua that is not 5.2 with the specific define (5.4.1 either removed it entirely or broke it)
-	#if (SOL_LUA_VERSION_I_ == 502) || (defined(LUA_COMPAT_BITLIB) && (LUA_COMPAT_BITLIB != 0)) || (SOL_LUA_VERSION_I_ < 504 && (defined(LUA_COMPAT_5_2) && (LUA_COMPAT_5_2 != 0)))
+	#if (SOL_LUA_VERSION_I_ == 502)
+		#define SOL_LUA_BIT32_LIB_I_ SOL_ON
+	#elif (defined(LUA_COMPAT_BITLIB) && (LUA_COMPAT_BITLIB != 0))
+		#define SOL_LUA_BIT32_LIB_I_ SOL_ON
+	#elif (SOL_LUA_VERSION_I_ < 504 && (defined(LUA_COMPAT_5_2) && (LUA_COMPAT_5_2 != 0)))
 		#define SOL_LUA_BIT32_LIB_I_ SOL_ON
 	#else
 		#define SOL_LUA_BIT32_LIB_I_ SOL_DEFAULT_OFF
