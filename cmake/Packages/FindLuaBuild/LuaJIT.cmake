@@ -29,12 +29,6 @@ set(lua_jit_build_included true)
 # import necessary standard modules
 include(ExternalProject)
 
-# Latest iterations for specific sub-versions of LuaJIT
-set(LUA_JIT_2.0_LATEST_VERSION 2.0.5)
-set(LUA_JIT_${LUA_JIT_2.0_LATEST_VERSION}_COMMIT c88602f080dcafea6ba222a2f7cc1ea0e41ef3cc)
-set(LUA_JIT_2.1_LATEST_VERSION 2.1.0-beta3)
-set(LUA_JIT_${LUA_JIT_2.1_LATEST_VERSION}_COMMIT 80aaaeee99d7f7b06c9e75ed3a457c49d86fc4db)
-
 # MD5 hashes taken off of LuaJIT's website
 # must be updated whenever a new version appears
 set(LUA_JIT_MD5_2.1.0-beta3.tar.gz eae40bc29d06ee5e3078f9444fcea39b)
@@ -102,9 +96,9 @@ elseif (LUA_JIT_NORMALIZED_LUA_VERSION MATCHES "([0-9]+\\.[0-9]+)")
 	# extend version number with prefix
 	if (${CMAKE_MATCH_1} EQUAL 2)
 		if (${CMAKE_MATCH_2} EQUAL 0)
-			set(LUA_JIT_VERSION ${LUA_JIT_2.0_LATEST_VERSION})
+			set(LUA_JIT_VERSION 2.0)
 		elseif (${CMAKE_MATCH_2} EQUAL 1)
-			set(LUA_JIT_VERSION ${LUA_JIT_2.1_LATEST_VERSION})
+			set(LUA_JIT_VERSION 2.1)
 		endif()
 	endif()
 	if (NOT LUA_JIT_VERSION)
@@ -112,7 +106,7 @@ elseif (LUA_JIT_NORMALIZED_LUA_VERSION MATCHES "([0-9]+\\.[0-9]+)")
 		set(LUA_JIT_VERSION ${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.0)			
 	endif()
 elseif (LUA_JIT_NORMALIZED_LUA_VERSION MATCHES "latest")
-	set(LUA_JIT_VERSION ${LUA_JIT_2.1_LATEST_VERSION})
+	set(LUA_JIT_VERSION 2.1)
 else()
 	MESSAGE(FATAL "Cannot deduce LuaJIT version from ${LUA_VERSION}")
 endif()
@@ -205,7 +199,27 @@ if (MSVC)
 		"C:/Program Files/Microsoft Visual Studio/2019/Professional/VC"
 		"C:/Program Files/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build"
 		"C:/Program Files/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary"
-		"C:/Program Files/Microsoft Visual Studio/2019/Enterprise/VC")
+		"C:/Program Files/Microsoft Visual Studio/2019/Enterprise/VC"
+
+		"C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Auxiliary"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2022/Professional/VC/Auxiliary/Build"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2022/Professional/VC/Auxiliary"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2022/Professional/VC"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2022/Enterprise/VC"
+
+		"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build"
+		"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary"
+		"C:/Program Files/Microsoft Visual Studio/2022/Community/VC"
+		"C:/Program Files/Microsoft Visual Studio/2022/Professional/VC/Auxiliary/Build"
+		"C:/Program Files/Microsoft Visual Studio/2022/Professional/VC/Auxiliary"
+		"C:/Program Files/Microsoft Visual Studio/2022/Professional/VC"
+		"C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build"
+		"C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary"
+		"C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC")
 	if (VCVARS_ALL_BAT MATCHES "VCVARS_ALL_BAT-NOTFOUND")
 		MESSAGE(FATAL_ERROR "Cannot find 'vcvarsall.bat' file or similar needed to build LuaJIT ${LUA_VERSION} on Windows")
 	endif()
@@ -289,23 +303,20 @@ file(TO_CMAKE_PATH "${LUA_JIT_IMP_LIB_FILE}" LUA_JIT_DESTINATION_LUA_IMP_LIB)
 file(TO_CMAKE_PATH "${LUA_JIT_LIB_FILE}" LUA_JIT_DESTINATION_LUA_LIB)
 file(TO_CMAKE_PATH "${LUA_JIT_EXE_FILE}" LUA_JIT_DESTINATION_LUA_INTERPRETER)
 
-if (WIN32 AND NOT MSVC)
-	string(COMPARE EQUAL ${LUA_JIT_VERSION} ${LUA_JIT_2.0_LATEST_VERSION} lua_jit_same_version_20)
-	string(COMPARE EQUAL ${LUA_JIT_VERSION} ${LUA_JIT_2.1_LATEST_VERSION} lua_jit_same_version_21)
-	if (lua_jit_same_version_20 OR lua_jit_same_version_21)
-		#set (LUA_JIT_GIT_COMMIT ${LUA_JIT_${LUA_JIT_VERSION}_COMMIT})
-		#set(LUA_JIT_GIT_TAG GIT_TAG ${LUA_JIT_GIT_COMMIT})
-	endif()
-elseif(LUA_JIT_NORMALIZED_LUA_VERSION MATCHES "latest")
+if(LUA_JIT_NORMALIZED_LUA_VERSION MATCHES "latest")
 	set(LUA_JIT_PULL_LATEST TRUE)
 endif()
 
-set(LUA_JIT_BYPRODUCTS "${LUA_JIT_SOURCE_LUA_DLL}" "${LUA_JIT_SOURCE_LUA_INTERPRETER}")
-set(LUA_JIT_INSTALL_BYPRODUCTS "${LUA_JIT_DESTINATION_LUA_DLL}" "${LUA_JIT_DESTINATION_LUA_INTERPRETER}")
+set(LUA_JIT_BYPRODUCTS "${LUA_JIT_SOURCE_LUA_INTERPRETER}")
+set(LUA_JIT_INSTALL_BYPRODUCTS "${LUA_JIT_DESTINATION_LUA_INTERPRETER}")
 
-if (BUILD_LUA_AS_DLL AND MSVC)
-	set(LUA_JIT_BYPRODUCTS ${LUA_JIT_BYPRODUCTS} "${LUA_JIT_SOURCE_LUA_LIB_EXP}")
-	set(LUA_JIT_INSTALL_BYPRODUCTS ${LUA_JIT_INSTALL_BYPRODUCTS} "${LUA_JIT_DESTINATION_LUA_LIB_EXP}")
+if (BUILD_LUA_AS_DLL)
+	set(LUA_JIT_BYPRODUCTS ${LUA_JIT_BYPRODUCTS} "${LUA_JIT_SOURCE_LUA_DLL}")
+	set(LUA_JIT_INSTALL_BYPRODUCTS ${LUA_JIT_INSTALL_BYPRODUCTS} "${LUA_JIT_SOURCE_LUA_DLL}")
+	if (MSVC)
+		set(LUA_JIT_BYPRODUCTS ${LUA_JIT_BYPRODUCTS} "${LUA_JIT_SOURCE_LUA_LIB_EXP}")
+		set(LUA_JIT_INSTALL_BYPRODUCTS ${LUA_JIT_INSTALL_BYPRODUCTS} "${LUA_JIT_DESTINATION_LUA_LIB_EXP}")
+	endif()
 endif()
 
 if (CMAKE_IMPORT_LIBRARY_SUFFIX AND BUILD_LUA_AS_DLL)
@@ -319,23 +330,24 @@ endif()
 # # Post-Build moving steps for necessary items
 # Add post-step to move library afterwards
 set(LUA_JIT_POSTBUILD_COMMENTS "Executable - Moving \"${LUA_JIT_SOURCE_LUA_INTERPRETER}\" to \"${LUA_JIT_DESTINATION_LUA_INTERPRETER}\"...")
-set(LUA_JIT_POSTBUILD_COMMANDS COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${LUA_JIT_SOURCE_LUA_INTERPRETER}" "${LUA_JIT_DESTINATION_LUA_INTERPRETER}")
+set(LUA_JIT_POSTBUILD_COMMANDS COMMAND ${CMAKE_COMMAND} -E copy_if_different ${LUA_JIT_SOURCE_LUA_INTERPRETER} ${LUA_JIT_DESTINATION_LUA_INTERPRETER})
 if (BUILD_LUA_AS_DLL)
 	if (MSVC)
 		set(LUA_JIT_POSTBUILD_COMMENTS "${LUA_JIT_POSTBUILD_COMMENTS} Import Library - Moving \"${LUA_JIT_SOURCE_LUA_IMP_LIB}\" to \"${LUA_JIT_DESTINATION_LUA_IMP_LIB}\"...")
-		set(LUA_JIT_POSTBUILD_COMMANDS ${LUA_JIT_POSTBUILD_COMMANDS} COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${LUA_JIT_SOURCE_LUA_IMP_LIB}" "${LUA_JIT_DESTINATION_LUA_IMP_LIB}")
+		set(LUA_JIT_POSTBUILD_COMMANDS ${LUA_JIT_POSTBUILD_COMMANDS} COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${LUA_JIT_SOURCE_LUA_IMP_LIB} ${LUA_JIT_DESTINATION_LUA_IMP_LIB})
 		
 		set(LUA_JIT_POSTBUILD_COMMENTS "${LUA_JIT_POSTBUILD_COMMENTS} Library - Moving \"${LUA_JIT_SOURCE_LUA_LIB_EXP}\" to \"${LUA_JIT_DESTINATION_LUA_LIB_EXP}\"...")
-		set(LUA_JIT_POSTBUILD_COMMANDS ${LUA_JIT_POSTBUILD_COMMANDS} && "${CMAKE_COMMAND}" -E copy_if_different "${LUA_JIT_SOURCE_LUA_LIB_EXP}" "${LUA_JIT_DESTINATION_LUA_LIB_EXP}")
+		set(LUA_JIT_POSTBUILD_COMMANDS ${LUA_JIT_POSTBUILD_COMMANDS} COMMAND ${CMAKE_COMMAND} -E copy_if_different ${LUA_JIT_SOURCE_LUA_LIB_EXP} ${LUA_JIT_DESTINATION_LUA_LIB_EXP})
 	endif()
 	set(LUA_JIT_POSTBUILD_COMMENTS "${LUA_JIT_POSTBUILD_COMMENTS} Dynamic Library - Moving \"${LUA_JIT_SOURCE_LUA_DLL}\" to \"${LUA_JIT_DESTINATION_LUA_DLL}\"...")
-	set(LUA_JIT_POSTBUILD_COMMANDS ${LUA_JIT_POSTBUILD_COMMANDS} COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${LUA_JIT_SOURCE_LUA_DLL}" "${LUA_JIT_DESTINATION_LUA_DLL}")
+	set(LUA_JIT_POSTBUILD_COMMANDS ${LUA_JIT_POSTBUILD_COMMANDS} COMMAND ${CMAKE_COMMAND} -E copy_if_different ${LUA_JIT_SOURCE_LUA_DLL} ${LUA_JIT_DESTINATION_LUA_DLL})
 else()
 	set(LUA_JIT_POSTBUILD_COMMENTS "${LUA_JIT_POSTBUILD_COMMENTS} Library - Moving \"${LUA_JIT_SOURCE_LUA_LIB}\" to \"${LUA_JIT_DESTINATION_LUA_LIB}\"...")
-	set(LUA_JIT_POSTBUILD_COMMANDS ${LUA_JIT_POSTBUILD_COMMANDS} COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${LUA_JIT_SOURCE_LUA_LIB}" "${LUA_JIT_DESTINATION_LUA_LIB}")
+	set(LUA_JIT_POSTBUILD_COMMANDS ${LUA_JIT_POSTBUILD_COMMANDS} COMMAND ${CMAKE_COMMAND} -E copy_if_different ${LUA_JIT_SOURCE_LUA_LIB} ${LUA_JIT_DESTINATION_LUA_LIB})
 endif()
 
 if (LUA_LOCAL_DIR)
+	MESSAGE(STATUS "Using LuaJIT ${LUA_JIT_VERSION} from local directory \"${LUA_LOCAL_DIR}\"")
 	file(COPY "${LUA_LOCAL_DIR}/"
 		DESTINATION "${LUA_BUILD_TOPLEVEL}"
 		FILES_MATCHING REGEX ".*"
@@ -344,19 +356,27 @@ if (LUA_LOCAL_DIR)
 		COMMAND ${LUA_JIT_MAKE_COMMAND}
 		WORKING_DIRECTORY "${LUA_BUILD_TOPLEVEL}"
 		DEPENDS "${LUA_BUILD_TOPLEVEL}/Makefile" "${LUA_BUILD_TOPLEVEL}/src/msvcbuild.bat"
-		COMMENT "Building LuaJIT ${LUA_JIT_VERSION}..."
+		COMMENT "Building LuaJIT ${LUA_JIT_VERSION} ..."
+	)
+	add_custom_target(LUA_JIT-bat-build
+		DEPENDS ${LUA_JIT_BYPRODUCTS}
+	)
+
+	add_custom_command(OUTPUT ${LUA_JIT_INSTALL_BYPRODUCTS}
+		${LUA_JIT_POSTBUILD_COMMANDS}
+		COMMENT "${LUA_JIT_POSTBUILD_COMMENTS}"
+		WORKING_DIRECTORY "${LUA_BUILD_TOPLEVEL}"
+		DEPENDS ${LUA_JIT_BYPRODUCTS}
 	)
 	add_custom_target(LUA_JIT-move
-		${LUA_JIT_POSTBUILD_COMMANDS}
-		COMMENT ${LUA_JIT_POSTBUILD_COMMENTS}
-		BYPRODUCTS ${LUA_JIT_INSTALL_BYPRODUCTS}
-		DEPENDS ${LUA_JIT_BYPRODUCTS}
+		DEPENDS LUA_JIT-bat-build ${LUA_JIT_INSTALL_BYPRODUCTS}
 	)
 elseif (LUA_JIT_GIT_COMMIT OR LUA_JIT_PULL_LATEST)
 	if (LUA_JIT_PULL_LATEST)
 		MESSAGE(STATUS "Latest LuaJIT has been requested: pulling from git...")
 	elseif (LUA_JIT_GIT_COMMIT)
-		MESSAGE(STATUS "LuaJIT '${LUA_VERSION}' requested has broken static library builds: using git '${LUA_JIT_GIT_COMMIT}'...")			
+		MESSAGE(STATUS "LuaJIT '${LUA_VERSION}' requested has broken static library builds: using git '${LUA_JIT_GIT_COMMIT}'...")
+		set(LUA_JIT_GIT_TAG GIT_TAG ${LUA_JIT_GIT_COMMIT})
 	endif()
 	ExternalProject_Add(LUA_JIT
 		BUILD_IN_SOURCE TRUE
@@ -412,11 +432,14 @@ endif()
 
 # # Lua Library
 add_library(${lualib} INTERFACE)
+add_library(Lua::Lua ALIAS ${lualib})
 add_dependencies(${lualib} LUA_JIT-move)
 target_include_directories(${lualib}
-	INTERFACE "${LUA_JIT_SOURCE_DIR}")
+	INTERFACE
+		"${LUA_JIT_SOURCE_DIR}")
 target_link_libraries(${lualib}
-		INTERFACE ${CMAKE_DL_LIBS})
+	INTERFACE
+		${CMAKE_DL_LIBS})
 if (BUILD_LUA_AS_DLL)
 	if (MSVC)
 		target_link_libraries(${lualib}
@@ -436,6 +459,6 @@ if (XCODE)
 endif ()
 	
 # # set externally-visible target indicator
-set(LUA_LIBRARIES ${lualib})
+set(LUA_LIBRARIES Lua::Lua)
 set(LUA_INTERPRETER "")
 set(LUA_INCLUDE_DIRS "${LUA_JIT_INCLUDE_DIRS}")
