@@ -22,9 +22,9 @@
 
 # # # # sol3, single
 # # # Required minimum version statement
-cmake_minimum_required(VERSION 3.15.0)
+cmake_minimum_required(VERSION 3.26.0)
 
-find_package(PythonInterp 3 REQUIRED)
+find_package(Python3 REQUIRED)
 
 # to generate, need all of the existing header files
 file(GLOB sol2_generated_header_sources ${CMAKE_CURRENT_SOURCE_DIR}/../include/**/*.*)

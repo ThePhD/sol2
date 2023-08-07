@@ -42,8 +42,6 @@
 #include <variant>
 #endif // Can use variant
 
-#include <sol/debug.hpp>
-
 namespace sol { namespace stack {
 	namespace stack_detail {
 		template <typename T>

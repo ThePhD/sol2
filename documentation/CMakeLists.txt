@@ -22,7 +22,7 @@
 
 # # # # sol2, documentation generation
 # # # Required minimum version statement
-cmake_minimum_required(VERSION 3.16.0)
+cmake_minimum_required(VERSION 3.26.0)
 	
 find_package(Doxygen REQUIRED)
 find_package(Python3 REQUIRED)
