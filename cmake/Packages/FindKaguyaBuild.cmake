@@ -45,6 +45,7 @@ ExternalProject_Add(KAGUYA_BUILD_SOURCE
 	GIT_SHALLOW TRUE
 	GIT_SUBMODULES ""
 	GIT_REPOSITORY https://github.com/satoren/kaguya.git
+	GIT_TAG main
 	PREFIX ${kaguya_build_toplevel}
 	SOURCE_DIR ${kaguya_build_toplevel}
 	DOWNLOAD_DIR ${kaguya_build_toplevel}
