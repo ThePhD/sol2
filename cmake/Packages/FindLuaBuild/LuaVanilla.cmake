@@ -199,7 +199,7 @@ extern \"C\" {
 		file(TO_NATIVE_PATH "${LUA_VANILLA_SOURCE_LUA_HPP}" LUA_VANILLA_SOURCE_LUA_HPP)
 	endif()
 
-	set(LUA_VANILLA_INCLUDE_DIRS ${lua-vanilla_SOURCE_DIR}/include)
+	set(LUA_VANILLA_INCLUDE_DIRS ${lua-vanilla_SOURCE_DIR}/src)
 endif()
 
 # # Target names
@@ -246,12 +246,14 @@ else()
 endif()
 if (WIN32)
 else()
-	target_compile_definitions(${liblua} 
+	target_compile_definitions(${liblua}
 		PRIVATE LUA_USE_LINUX)
 endif()
 target_compile_options(${liblua}
 	PRIVATE ${LUA_VANILLA_LUALIB_COMPILER_OPTIONS})
-add_dependencies(${liblua} LUA_VANILLA)
+if (LUA_LOCAL_DIR)
+	add_dependencies(${liblua} LUA_VANILLA)
+endif()
 target_link_libraries(${liblua} PRIVATE ${CMAKE_DL_LIBS})
 if (UNIX)
 	target_link_libraries(${liblua} PRIVATE m)
