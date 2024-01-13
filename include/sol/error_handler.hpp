@@ -84,7 +84,7 @@ namespace sol {
 
 	inline int push_type_panic_string(lua_State* L, int index, type expected, type actual, string_view message, string_view aux_message) noexcept {
 		const char* err = message.size() == 0
-		     ? (aux_message.size() == 0 ? "stack index %d, expected %s, received %s" : "stack index %d, expected %s, received %s: %s")
+		     ? (aux_message.size() == 0 ? "stack index %d, expected %s, received %s" : "stack index %d, expected %s, received %s: %s%s")
 		     : "stack index %d, expected %s, received %s: %s %s";
 		const char* type_name = expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(expected));
 		{
