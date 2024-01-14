@@ -20,7 +20,7 @@ int main(int, char*[]) {
 
 	sol::state lua;
 
-	lua.new_usertype<B>("A", "call", &A::call);
+	lua.new_usertype<A>("A", "call", &A::call);
 
 	lua.new_usertype<B>("B",
 	     "call",
