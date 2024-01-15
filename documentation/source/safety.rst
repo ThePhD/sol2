@@ -30,7 +30,7 @@ Safety Config
 	* All calls from Lua will have their arguments checked
 	* Turned on by default with clang++, g++ and VC++ if a basic check for building in debug mode is detected (lack of ``_NDEBUG`` or similar compiler-specific checks)
 
-``SOL_SAFE_FUNCTION`` triggers the following change:
+``SOL_SAFE_FUNCTIONS`` triggers the following change:
 	* All uses of ``sol::function`` and ``sol::stack_function`` will default to ``sol::protected_function`` and ``sol::stack_protected_function``, respectively, rather than ``sol::unsafe_function`` and ``sol::stack_unsafe_function``
 		- Note this does not apply to ``sol::stack_aligned_function``: this variant must always be unprotected due to stack positioning requirements, especially in use with ``sol::stack_count``
 	* Will make any ``sol::state_view::script`` calls default to their safe variants if there is no supplied environment or error handler function
