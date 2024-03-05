@@ -59,7 +59,7 @@ inline namespace sol2_regression_test_coroutines_array_proxy_lifetime {
 
 			value_type operator*() const {
 				size_t size = a.mpParent.children.size();
-				if (index >= 0 && index < size) {
+				if (index < size) {
 					return a.mpParent.children[index];
 				}
 				return std::weak_ptr<A>();
