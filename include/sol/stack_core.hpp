@@ -45,6 +45,7 @@
 #include <sstream>
 #include <optional>
 #include <type_traits>
+#include <limits>
 
 namespace sol {
 	namespace detail {
