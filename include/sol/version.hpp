@@ -237,7 +237,7 @@
 #define SOL_PLATFORM_BSDLIKE_I_      SOL_OFF
 
 #if defined(SOL_IN_DEBUG_DETECTED)
-	#if SOL_IN_DEBUG_DETECTED != 0
+	#if (SOL_IN_DEBUG_DETECTED != 0)
 		#define SOL_DEBUG_BUILD_I_ SOL_ON
 	#else
 		#define SOL_DEBUG_BUILD_I_ SOL_OFF
@@ -300,7 +300,7 @@
 #endif
 
 #if defined(SOL_NO_THREAD_LOCAL)
-	#if SOL_NO_THREAD_LOCAL != 0
+	#if (SOL_NO_THREAD_LOCAL != 0)
 		#define SOL_USE_THREAD_LOCAL_I_ SOL_OFF
 	#else
 		#define SOL_USE_THREAD_LOCAL_I_ SOL_ON
@@ -310,7 +310,7 @@
 #endif // thread_local keyword is bjorked on some platforms
 
 #if defined(SOL_ALL_SAFETIES_ON)
-	#if SOL_ALL_SAFETIES_ON != 0
+	#if (SOL_ALL_SAFETIES_ON != 0)
 		#define SOL_ALL_SAFETIES_ON_I_ SOL_ON
 	#else
 		#define SOL_ALL_SAFETIES_ON_I_ SOL_OFF
@@ -320,7 +320,7 @@
 #endif
 
 #if defined(SOL_SAFE_GETTER)
-	#if SOL_SAFE_GETTER != 0
+	#if (SOL_SAFE_GETTER != 0)
 		#define SOL_SAFE_GETTER_I_ SOL_ON
 	#else
 		#define SOL_SAFE_GETTER_I_ SOL_OFF
@@ -336,7 +336,7 @@
 #endif
 
 #if defined(SOL_SAFE_USERTYPE)
-	#if SOL_SAFE_USERTYPE != 0
+	#if (SOL_SAFE_USERTYPE != 0)
 		#define SOL_SAFE_USERTYPE_I_ SOL_ON
 	#else
 		#define SOL_SAFE_USERTYPE_I_ SOL_OFF
@@ -352,7 +352,7 @@
 #endif
 
 #if defined(SOL_SAFE_REFERENCES)
-	#if SOL_SAFE_REFERENCES != 0
+	#if (SOL_SAFE_REFERENCES != 0)
 		#define SOL_SAFE_REFERENCES_I_ SOL_ON
 	#else
 		#define SOL_SAFE_REFERENCES_I_ SOL_OFF
@@ -368,13 +368,13 @@
 #endif
 
 #if defined(SOL_SAFE_FUNCTIONS)
-	#if SOL_SAFE_FUNCTIONS != 0
+	#if (SOL_SAFE_FUNCTIONS != 0)
 		#define SOL_SAFE_FUNCTION_OBJECTS_I_ SOL_ON
 	#else
 		#define SOL_SAFE_FUNCTION_OBJECTS_I_ SOL_OFF
 	#endif
 #elif defined (SOL_SAFE_FUNCTION_OBJECTS)
-	#if SOL_SAFE_FUNCTION_OBJECTS != 0
+	#if (SOL_SAFE_FUNCTION_OBJECTS != 0)
 		#define SOL_SAFE_FUNCTION_OBJECTS_I_ SOL_ON
 	#else
 		#define SOL_SAFE_FUNCTION_OBJECTS_I_ SOL_OFF
@@ -390,7 +390,7 @@
 #endif
 
 #if defined(SOL_SAFE_FUNCTION_CALLS)
-	#if SOL_SAFE_FUNCTION_CALLS != 0
+	#if (SOL_SAFE_FUNCTION_CALLS != 0)
 		#define SOL_SAFE_FUNCTION_CALLS_I_ SOL_ON
 	#else
 		#define SOL_SAFE_FUNCTION_CALLS_I_ SOL_OFF
@@ -406,7 +406,7 @@
 #endif
 
 #if defined(SOL_SAFE_PROXIES)
-	#if SOL_SAFE_PROXIES != 0
+	#if (SOL_SAFE_PROXIES != 0)
 		#define SOL_SAFE_PROXIES_I_ SOL_ON
 	#else
 		#define SOL_SAFE_PROXIES_I_ SOL_OFF
@@ -422,7 +422,7 @@
 #endif
 
 #if defined(SOL_SAFE_NUMERICS)
-	#if SOL_SAFE_NUMERICS != 0
+	#if (SOL_SAFE_NUMERICS != 0)
 		#define SOL_SAFE_NUMERICS_I_ SOL_ON
 	#else
 		#define SOL_SAFE_NUMERICS_I_ SOL_OFF
@@ -452,7 +452,7 @@
 #endif
 
 #if defined(SOL_SAFE_STACK_CHECK)
-	#if SOL_SAFE_STACK_CHECK != 0
+	#if (SOL_SAFE_STACK_CHECK != 0)
 		#define SOL_SAFE_STACK_CHECK_I_ SOL_ON
 	#else
 		#define SOL_SAFE_STACK_CHECK_I_ SOL_OFF
@@ -468,13 +468,13 @@
 #endif
 
 #if defined(SOL_NO_CHECK_NUMBER_PRECISION)
-	#if SOL_NO_CHECK_NUMBER_PRECISION != 0
+	#if (SOL_NO_CHECK_NUMBER_PRECISION != 0)
 		#define SOL_NUMBER_PRECISION_CHECKS_I_ SOL_OFF
 	#else
 		#define SOL_NUMBER_PRECISION_CHECKS_I_ SOL_ON
 	#endif
 #elif defined(SOL_NO_CHECKING_NUMBER_PRECISION)
-	#if SOL_NO_CHECKING_NUMBER_PRECISION != 0
+	#if (SOL_NO_CHECKING_NUMBER_PRECISION != 0)
 		#define SOL_NUMBER_PRECISION_CHECKS_I_ SOL_OFF
 	#else
 		#define SOL_NUMBER_PRECISION_CHECKS_I_ SOL_ON
@@ -502,13 +502,13 @@
 #endif
 
 #if defined(SOL_ENABLE_INTEROP)
-	#if SOL_ENABLE_INTEROP != 0
+	#if (SOL_ENABLE_INTEROP != 0)
 		#define SOL_USE_INTEROP_I_ SOL_ON
 	#else
 		#define SOL_USE_INTEROP_I_ SOL_OFF
 	#endif
 #elif defined(SOL_USE_INTEROP)
-	#if SOL_USE_INTEROP != 0
+	#if (SOL_USE_INTEROP != 0)
 		#define SOL_USE_INTEROP_I_ SOL_ON
 	#else
 		#define SOL_USE_INTEROP_I_ SOL_OFF
@@ -598,19 +598,19 @@
 	#endif
 #endif // noexcept is part of a function's type
 
-#if defined(SOL_STACK_STRING_OPTIMIZATION_SIZE) && SOL_STACK_STRING_OPTIMIZATION_SIZE > 0
+#if defined(SOL_STACK_STRING_OPTIMIZATION_SIZE) && (SOL_STACK_STRING_OPTIMIZATION_SIZE > 0)
 	#define SOL_OPTIMIZATION_STRING_CONVERSION_STACK_SIZE_I_ SOL_STACK_STRING_OPTIMIZATION_SIZE
 #else
 	#define SOL_OPTIMIZATION_STRING_CONVERSION_STACK_SIZE_I_ 1024
 #endif
 
-#if defined(SOL_ID_SIZE) && SOL_ID_SIZE > 0
+#if defined(SOL_ID_SIZE) && (SOL_ID_SIZE > 0)
 	#define SOL_ID_SIZE_I_ SOL_ID_SIZE
 #else
 	#define SOL_ID_SIZE_I_ 512
 #endif
 
-#if defined(LUA_IDSIZE) && LUA_IDSIZE > 0
+#if defined(LUA_IDSIZE) && (LUA_IDSIZE > 0)
 	#define SOL_FILE_ID_SIZE_I_ LUA_IDSIZE
 #elif defined(SOL_ID_SIZE) && SOL_ID_SIZE > 0
 	#define SOL_FILE_ID_SIZE_I_ SOL_FILE_ID_SIZE
