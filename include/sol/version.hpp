@@ -98,7 +98,7 @@
 #endif
 
 #if defined(SOL_COMPILER_VCXX)
-	#if defined(SOL_COMPILER_VCXX != 0)
+	#if (SOL_COMPILER_VCXX != 0)
 		#define SOL_COMPILER_VCXX_I_ SOL_ON
 	#else
 		#define SOL_COMPILER_VCXX_I_ SOL_OFF
@@ -110,7 +110,7 @@
 #endif
 
 #if defined(SOL_COMPILER_GCC)
-	#if defined(SOL_COMPILER_GCC != 0)
+	#if (SOL_COMPILER_GCC != 0)
 		#define SOL_COMPILER_GCC_I_ SOL_ON
 	#else
 		#define SOL_COMPILER_GCC_I_ SOL_OFF
@@ -122,7 +122,7 @@
 #endif
 
 #if defined(SOL_COMPILER_CLANG)
-	#if defined(SOL_COMPILER_CLANG != 0)
+	#if (SOL_COMPILER_CLANG != 0)
 		#define SOL_COMPILER_CLANG_I_ SOL_ON
 	#else
 		#define SOL_COMPILER_CLANG_I_ SOL_OFF
@@ -134,7 +134,7 @@
 #endif
 
 #if defined(SOL_COMPILER_EDG)
-	#if defined(SOL_COMPILER_EDG != 0)
+	#if (SOL_COMPILER_EDG != 0)
 		#define SOL_COMPILER_EDG_I_ SOL_ON
 	#else
 		#define SOL_COMPILER_EDG_I_ SOL_OFF
