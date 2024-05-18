@@ -478,7 +478,7 @@ namespace sol {
 					using object_type = typename wrap::object_type;
 					if constexpr (sizeof...(Args) < 1) {
 						using Ta = meta::conditional_t<std::is_void_v<T>, object_type, T>;
-						static_assert(std::is_base_of_v<object_type, Ta>,
+						static_assert(std::is_same_v<object_type, Ta> || std::is_base_of_v<object_type, Ta>,
 						     "It seems like you might have accidentally bound a class type with a member function method that does not correspond to the "
 						     "class. For example, there could be a small type in your new_usertype<T>(...) binding, where you specify one class \"T\" "
 						     "but then bind member methods from a complete unrelated class. Check things over!");
@@ -511,7 +511,7 @@ namespace sol {
 					if constexpr (is_index) {
 						if constexpr (sizeof...(Args) < 1) {
 							using Ta = meta::conditional_t<std::is_void_v<T>, object_type, T>;
-							static_assert(std::is_base_of_v<object_type, Ta>,
+							static_assert(std::is_same_v<object_type, Ta> || std::is_base_of_v<object_type, Ta>,
 							     "It seems like you might have accidentally bound a class type with a member function method that does not correspond "
 							     "to the class. For example, there could be a small type in your new_usertype<T>(...) binding, where you specify one "
 							     "class \"T\" but then bind member methods from a complete unrelated class. Check things over!");
