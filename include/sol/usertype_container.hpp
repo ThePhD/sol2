@@ -1188,8 +1188,8 @@ namespace sol {
 			template <bool ip>
 			static int next_associative(std::true_type, lua_State* L_) {
 				iter& i = stack::unqualified_get<user<iter>>(L_, 1);
-				auto& it = i.it;
-				auto& end = i.end;
+				auto& it = i.it();
+				auto& end = i.sen();
 				if (it == end) {
 					return stack::push(L_, lua_nil);
 				}
