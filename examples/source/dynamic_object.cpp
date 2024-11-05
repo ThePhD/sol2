@@ -19,7 +19,7 @@ struct dynamic_object {
 			     it, { std::move(key), std::move(value) });
 		}
 		else {
-			std::pair<const std::string, sol::main_object>& kvp
+			std::pair<const std::string, sol::object>& kvp
 			     = *it;
 			sol::object& entry = kvp.second;
 			entry = sol::object(std::move(value));
