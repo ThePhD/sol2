@@ -29,16 +29,16 @@
 // clang-format off
 
 #if SOL_IS_ON(SOL_USING_CXX_LUA)
-	#include <lua.h>
-	#include <lualib.h>
-	#include <lauxlib.h>
+	#include <lua/lua.h>
+	#include <lua/lualib.h>
+	#include <lua/lauxlib.h>
 #elif SOL_IS_ON(SOL_USE_LUA_HPP)
 	#include <lua.hpp>
 #else
 	extern "C" {
-		#include <lua.h>
-		#include <lauxlib.h>
-		#include <lualib.h>
+		#include <lua/lua.h>
+		#include <lua/lauxlib.h>
+		#include <lua/lualib.h>
 	}
 #endif // C++ Mangling for Lua vs. Not
 
