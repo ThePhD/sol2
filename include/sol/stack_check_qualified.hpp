@@ -28,7 +28,7 @@
 
 namespace sol { namespace stack {
 
-	template <typename X, type expected, typename>
+	template <typename X, typename>
 	struct qualified_checker {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {

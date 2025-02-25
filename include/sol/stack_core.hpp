@@ -571,7 +571,7 @@ namespace sol {
 
 		template <typename T, type t, typename = void>
 		struct unqualified_checker;
-		template <typename T, type t, typename = void>
+		template <typename T, typename = void>
 		struct qualified_checker;
 
 		template <typename T, typename = void>
@@ -1002,8 +1002,7 @@ namespace sol {
 				return sol_lua_check(types<T>(), L, index, std::forward<Handler>(handler), tracking);
 			}
 			else {
-				using Tu = meta::unqualified_t<T>;
-				qualified_checker<T, lua_type_of_v<Tu>> c{};
+				qualified_checker<T> c{};
 				return c.check(L, index, std::forward<Handler>(handler), tracking);
 			}
 		}

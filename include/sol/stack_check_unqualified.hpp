@@ -389,9 +389,7 @@ namespace sol { namespace stack {
 					return success;
 				}
 				else if constexpr (meta::is_specialization_of_v<T, user>) {
-					unqualified_checker<lightuserdata_value, type::userdata> c;
-					(void)c;
-					return c.check(L_, index, std::forward<Handler>(handler), tracking);
+					return stack::unqualified_check<detail::as_value_tag<lightuserdata_value>>(L_, index, std::forward<Handler>(handler), tracking);
 				}
 				else {
 					if constexpr (std::is_pointer_v<T>) {
