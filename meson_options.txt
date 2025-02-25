@@ -1,2 +1,5 @@
 option('single', type: 'boolean', value: false, description: 'Generate the sol2 single header and expose the corresponding build targets')
 option('lua_cpp', type: 'boolean', value: false, description: 'Compile lua as C++ code')
+
+# Designed to work with the luajit wrapDB package provided by meson, others are a toss-up
+option('use_luajit', type: 'boolean', value: false, description: 'Search for luajit dep, implies lua_cpp=false')
