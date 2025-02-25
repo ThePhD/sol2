@@ -29,16 +29,32 @@
 // clang-format off
 
 #if SOL_IS_ON(SOL_USING_CXX_LUA)
-	#include <lua.h>
-	#include <lualib.h>
-	#include <lauxlib.h>
-#elif SOL_IS_ON(SOL_USE_LUA_HPP)
-	#include <lua.hpp>
-#else
-	extern "C" {
+	#if __has_include(<lua/lua.h>)
+		#include <lua/lua.h>
+		#include <lua/lauxlib.h>
+		#include <lua/lualib.h>
+	#else
 		#include <lua.h>
 		#include <lauxlib.h>
 		#include <lualib.h>
+	#endif
+#elif SOL_IS_ON(SOL_USE_LUA_HPP)
+	#if __has_include(<lua/lua.hpp>)
+		#include <lua/lua.hpp>
+	#else
+		#include <lua.hpp>
+	#endif
+#else
+	extern "C" {
+		#if __has_include(<lua/lua.h>)
+			#include <lua/lua.h>
+			#include <lua/lauxlib.h>
+			#include <lua/lualib.h>
+		#else
+			#include <lua.h>
+			#include <lauxlib.h>
+			#include <lualib.h>
+		#endif
 	}
 #endif // C++ Mangling for Lua vs. Not
 
@@ -49,6 +65,8 @@
 		#define SOL_USE_LUAJIT_I_ SOL_OFF
 	#endif
 #elif defined(LUAJIT_VERSION)
+	#define SOL_USE_LUAJIT_I_ SOL_ON
+#elif SOL_IS_ON(SOL_USING_CXX_LUAJIT)
 	#define SOL_USE_LUAJIT_I_ SOL_ON
 #else
 	#define SOL_USE_LUAJIT_I_ SOL_DEFAULT_OFF
@@ -118,21 +136,25 @@
 	#else
 		#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_OFF
 	#endif
-#elif SOL_LUAJIT_VERSION_I_ >= 20100
-	// LuaJIT 2.1.0-beta3 and better have exception support locked in for all platforms (mostly)
-	#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_DEFAULT_ON
-#elif SOL_LUAJIT_VERSION_I_ >= 20000
-	// LuaJIT 2.0.x have exception support only on x64 builds
-	#if SOL_IS_ON(SOL_PLATFORM_X64)
-		#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_DEFAULT_ON
-	#else
-		#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_OFF
-	#endif
 #else
-	// otherwise, there is no exception safety for
-	// shoving exceptions through Lua and errors should
-	// always be serialized
-	#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_DEFAULT_OFF
+	#if SOL_IS_ON(SOL_USE_LUAJIT)
+		#if SOL_USE(SOL_LUAJIT_VERSION) >= 20100
+			// LuaJIT 2.1.0-beta3 and better have exception support locked in for all platforms (mostly)
+			#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_DEFAULT_ON
+		#elif SOL_USE(SOL_LUAJIT_VERSION) >= 20000
+			// LuaJIT 2.0.x have exception support only on x64 builds
+			#if SOL_IS_ON(SOL_PLATFORM_X64)
+				#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_DEFAULT_ON
+			#else
+				#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_DEFAULT_OFF
+			#endif
+		#endif
+	#else
+		// otherwise, there is no exception safety for
+		// shoving exceptions through Lua and errors should
+		// always be serialized
+		#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_DEFAULT_OFF
+	#endif
 #endif
 
 // Some configurations work with exceptions,
@@ -144,13 +166,14 @@
 		#define SOL_EXCEPTIONS_CATCH_ALL_I_ SOL_OFF
 	#endif
 #else
-	#if SOL_IS_ON(SOL_USE_LUAJIT)
-		#define SOL_EXCEPTIONS_CATCH_ALL_I_ SOL_DEFAULT_OFF
-	#elif SOL_IS_ON(SOL_USING_CXX_LUAJIT)
+	#if SOL_IS_ON(SOL_USE_LUAJIT) || SOL_IS_ON(SOL_USING_CXX_LUAJIT)
 		#define SOL_EXCEPTIONS_CATCH_ALL_I_ SOL_DEFAULT_OFF
 	#elif SOL_IS_ON(SOL_USING_CXX_LUA)
+		// C++ builds of Lua will throw an exception to implement its `yield` behavior;
+		// it is irresponsible to "catch all" on this setting.
 		#define SOL_EXCEPTIONS_CATCH_ALL_I_ SOL_DEFAULT_OFF
 	#else
+		// Otherwise, by default, everyhting should be caught.
 		#define SOL_EXCEPTIONS_CATCH_ALL_I_ SOL_DEFAULT_ON
 	#endif
 #endif

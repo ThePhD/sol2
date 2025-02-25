@@ -95,7 +95,7 @@ namespace sol {
 					if (valid()) {
 						return UT(nullopt);
 					}
-					return error(detail::direct_error, stack::get<std::string>(L, index));
+					return stack::stack_detail::get_error(L, index);
 				}
 				else {
 					if (!valid()) {
@@ -111,7 +111,7 @@ namespace sol {
 						type_panic_c_str(L, index, type_of(L, index), type::none, "expecting an error type (a string, from Lua)");
 					}
 #endif // Check proxy type's safety
-					return error(detail::direct_error, stack::get<std::string>(L, index));
+					return stack::stack_detail::get_error(L, index);
 				}
 				else {
 #if SOL_IS_ON(SOL_SAFE_PROXIES)

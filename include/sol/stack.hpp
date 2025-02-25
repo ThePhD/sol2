@@ -34,6 +34,7 @@
 #include <sol/stack_pop.hpp>
 #include <sol/stack_field.hpp>
 #include <sol/stack_probe.hpp>
+#include <sol/error.hpp>
 #include <sol/assert.hpp>
 
 #include <cstring>
@@ -358,6 +359,24 @@ namespace sol {
 #else
 			(void)L;
 #endif
+		}
+
+		namespace stack_detail {
+			inline error get_error(lua_State* L, int target) {
+				auto maybe_exc = stack::check_get<error&>(L, target);
+				if (maybe_exc.has_value()) {
+					return maybe_exc.value();
+				}
+				return error(detail::direct_error, stack::get<std::string>(L, target));
+			}
+
+			inline detail::error_exception get_error_exception(lua_State* L, int target) {
+				auto maybe_exc = stack::check_get<detail::error_exception&>(L, target);
+				if (maybe_exc.has_value()) {
+					return maybe_exc.value();
+				}
+				return detail::error_exception(detail::direct_error, stack::get<std::string>(L, target));
+			}
 		}
 	} // namespace stack
 } // namespace sol

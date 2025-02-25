@@ -483,7 +483,8 @@ namespace sol {
 						     "class. For example, there could be a small type in your new_usertype<T>(...) binding, where you specify one class \"T\" "
 						     "but then bind member methods from a complete unrelated class. Check things over!");
 #if SOL_IS_ON(SOL_SAFE_USERTYPE)
-						auto maybeo = stack::check_get<Ta*>(L, 1);
+						stack::record tracking {};
+						auto maybeo = stack::stack_detail::check_get_arg<Ta*>(L, 1, &no_panic, tracking);
 						if (!maybeo || maybeo.value() == nullptr) {
 							return luaL_error(L,
 							     "sol: received nil for 'self' argument (use ':' for accessing member functions, make sure member variables are "
@@ -516,7 +517,8 @@ namespace sol {
 							     "to the class. For example, there could be a small type in your new_usertype<T>(...) binding, where you specify one "
 							     "class \"T\" but then bind member methods from a complete unrelated class. Check things over!");
 #if SOL_IS_ON(SOL_SAFE_USERTYPE)
-							auto maybeo = stack::check_get<Ta*>(L, 1);
+							stack::record tracking {};
+							auto maybeo = stack::stack_detail::check_get_arg<Ta*>(L, 1, &no_panic, tracking);
 							if (!maybeo || maybeo.value() == nullptr) {
 								if (is_variable) {
 									return luaL_error(L, "sol: 'self' argument is lua_nil (bad '.' access?)");
@@ -574,7 +576,8 @@ namespace sol {
 								else {
 									using Ta = meta::conditional_t<std::is_void_v<T>, object_type, T>;
 #if SOL_IS_ON(SOL_SAFE_USERTYPE)
-									auto maybeo = stack::check_get<Ta*>(L, 1);
+								stack::record tracking {};
+								auto maybeo = stack::stack_detail::check_get_arg<Ta*>(L, 1, &no_panic, tracking);
 									if (!maybeo || maybeo.value() == nullptr) {
 										if (is_variable) {
 											return luaL_error(L, "sol: received nil for 'self' argument (bad '.' access?)");
@@ -812,7 +815,8 @@ namespace sol {
 						using Ta = T;
 						using Oa = std::remove_pointer_t<object_type>;
 #if SOL_IS_ON(SOL_SAFE_USERTYPE)
-						auto maybeo = stack::check_get<Ta*>(L, 1);
+						stack::record tracking {};
+						auto maybeo = stack::stack_detail::check_get_arg<Ta*>(L, 1, &no_panic, tracking);
 						if (!maybeo || maybeo.value() == nullptr) {
 							if (is_variable) {
 								return luaL_error(L, "sol: 'self' argument is lua_nil (bad '.' access?)");

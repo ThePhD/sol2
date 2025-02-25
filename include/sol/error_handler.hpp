@@ -24,6 +24,7 @@
 #ifndef SOL_ERROR_HANDLER_HPP
 #define SOL_ERROR_HANDLER_HPP
 
+#include <sol/config.hpp>
 #include <sol/types.hpp>
 #include <sol/demangle.hpp>
 
@@ -96,12 +97,16 @@ namespace sol {
 
 	inline int type_panic_string(lua_State* L, int index, type expected, type actual, string_view message = "") noexcept(false) {
 		push_type_panic_string(L, index, expected, actual, message, "");
-		return lua_error(L);
+		size_t str_size = 0;
+		const char* str = lua_tolstring(L, -1, &str_size);
+		return luaL_error(L, str);
 	}
 
 	inline int type_panic_c_str(lua_State* L, int index, type expected, type actual, const char* message = nullptr) noexcept(false) {
 		push_type_panic_string(L, index, expected, actual, message == nullptr ? "" : message, "");
-		return lua_error(L);
+		size_t str_size = 0;
+		const char* str = lua_tolstring(L, -1, &str_size);
+		return luaL_error(L, str);
 	}
 
 	struct type_panic_t {
@@ -118,7 +123,9 @@ namespace sol {
 	struct constructor_handler {
 		int operator()(lua_State* L, int index, type expected, type actual, string_view message) const noexcept(false) {
 			push_type_panic_string(L, index, expected, actual, message, "(type check failed in constructor)");
-			return lua_error(L);
+			size_t str_size = 0;
+			const char* str = lua_tolstring(L, -1, &str_size);
+			return luaL_error(L, str);
 		}
 	};
 
@@ -126,7 +133,9 @@ namespace sol {
 	struct argument_handler {
 		int operator()(lua_State* L, int index, type expected, type actual, string_view message) const noexcept(false) {
 			push_type_panic_string(L, index, expected, actual, message, "(bad argument to variable or function call)");
-			return lua_error(L);
+			size_t str_size = 0;
+			const char* str = lua_tolstring(L, -1, &str_size);
+			return luaL_error(L, str);
 		}
 	};
 
@@ -142,7 +151,9 @@ namespace sol {
 				aux_message += ")')";
 				push_type_panic_string(L, index, expected, actual, message, aux_message);
 			}
-			return lua_error(L);
+			size_t str_size = 0;
+			const char* str = lua_tolstring(L, -1, &str_size);
+			return luaL_error(L, str);
 		}
 	};
 
