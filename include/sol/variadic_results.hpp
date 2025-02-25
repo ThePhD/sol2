@@ -58,9 +58,6 @@ namespace sol {
 		          std::is_same<meta::unqualified_t<Arg0>, protected_function_result>> = meta::enabler>
 		basic_variadic_results(Arg0&& arg0, Args&&... args) : base_t(std::forward<Arg0>(arg0), std::forward<Args>(args)...) {
 		}
-
-		basic_variadic_results(const basic_variadic_results&) = default;
-		basic_variadic_results(basic_variadic_results&&) = default;
 	};
 
 	struct variadic_results : public basic_variadic_results<> {
