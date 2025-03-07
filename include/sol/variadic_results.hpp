@@ -61,6 +61,8 @@ namespace sol {
 
 		basic_variadic_results(const basic_variadic_results&) = default;
 		basic_variadic_results(basic_variadic_results&&) = default;
+		basic_variadic_results& operator=(const basic_variadic_results&) = default;
+		basic_variadic_results& operator=(basic_variadic_results&&) = default;
 	};
 
 	struct variadic_results : public basic_variadic_results<> {

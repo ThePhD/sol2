@@ -48,8 +48,8 @@ inline namespace sol2_regression_test_coroutines_array_proxy_lifetime {
 			using iterator_category = std::random_access_iterator_tag;
 			using difference_type = std::ptrdiff_t;
 			using value_type = std::weak_ptr<A>;
-			using pointer = std::weak_ptr<A>*;   // or also value_type*
-			using reference = std::weak_ptr<A>&; // or also value_type&
+			using pointer = std::weak_ptr<A>*;
+			using reference = std::weak_ptr<A>&;
 
 			const ArrayProxy& a;
 			size_t index;
@@ -59,7 +59,7 @@ inline namespace sol2_regression_test_coroutines_array_proxy_lifetime {
 
 			value_type operator*() const {
 				size_t size = a.mpParent.children.size();
-				if (index >= 0 && index < size) {
+				if (index < size) {
 					return a.mpParent.children[index];
 				}
 				return std::weak_ptr<A>();

@@ -124,32 +124,32 @@ You will need any flavor of python3 and an available compiler. The testing suite
 "A Sun For the Moon - A Zero-Overhead Lua Abstraction using C++"  
 ThePhD
 Lua Workshop 2016 - Mashape, San Francisco, CA  
-[Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/2016.10.14%20-%20ThePhD%20-%20No%20Overhead%20C%20Abstraction.pdf)
+[Deck](https://github.com/ThePhD/sol2/blob/develop/documentation/presentation/2016.10.14%20-%20ThePhD%20-%20No%20Overhead%20C%20Abstraction.pdf)
 
 "Wrapping Lua C in C++ - Efficiently, Nicely, and with a Touch of Magic"  
 ThePhD
 Boston C++ Meetup November 2017 - CiC (Milk Street), Boston, MA  
-[Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/2017.11.08%20-%20ThePhD%20-%20Wrapping%20Lua%20C%20in%20C%2B%2B.pdf)
+[Deck](https://github.com/ThePhD/sol2/blob/develop/documentation/presentation/2017.11.08%20-%20ThePhD%20-%20Wrapping%20Lua%20C%20in%20C%2B%2B.pdf)
 
 "Biting the CMake Bullet"  
 ThePhD
 Boston C++ Meetup February 2018 - CiC (Main Street), Cambridge, MA  
-[Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/2018.02.06%20-%20ThePhD%20-%20Biting%20the%20CMake%20Bullet.pdf)
+[Deck](https://github.com/ThePhD/sol2/blob/develop/documentation/presentation/2018.02.06%20-%20ThePhD%20-%20Biting%20the%20CMake%20Bullet.pdf)
 
 "Compile Fast, Run Faster, Scale Forever: A look into the sol2 Library"  
 ThePhD
 C++Now 2018 - Hudson Commons, Aspen Physics Center, Aspen, Colorado  
-[Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/2018.05.10%20-%20ThePhD%20-%20Compile%20Fast%2C%20Run%20Faster%2C%20Scale%20Forever.pdf)
+[Deck](https://github.com/ThePhD/sol2/blob/develop/documentation/presentation/2018.05.10%20-%20ThePhD%20-%20Compile%20Fast%2C%20Run%20Faster%2C%20Scale%20Forever.pdf)
 
 "Scripting at the Speed of Thought: Using Lua in C++ with sol2"  
 ThePhD
 CppCon 2018 - 404 Keystone, Meydenbauer Center, Aspen, Colorado  
-[Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/2018.09.28%20-%20ThePhD%20-%20Scripting%20at%20the%20Speed%20of%20Thought.pdf)
+[Deck](https://github.com/ThePhD/sol2/blob/develop/documentation/presentation/2018.09.28%20-%20ThePhD%20-%20Scripting%20at%20the%20Speed%20of%20Thought.pdf)
 
 "The Plan for Tomorrow: Compile-Time Extension Points in C++"
 ThePhD
 C++Now 2019 - Flug Auditorium, Aspen Physics Center, Aspen, Colorado
-[Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/2019.05.10%20-%20ThePhD%20-%20The%20Plan%20for%20Tomorrow%20-%20Compile-Time%20Extension%20Points%20in%20C%2b%2b.pdf)
+[Deck](https://github.com/ThePhD/sol2/blob/develop/documentation/presentation/2019.05.10%20-%20ThePhD%20-%20The%20Plan%20for%20Tomorrow%20-%20Compile-Time%20Extension%20Points%20in%20C%2b%2b.pdf)
 
 
 

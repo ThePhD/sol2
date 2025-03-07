@@ -56,7 +56,7 @@ namespace sol {
 
 		protected_function_result() noexcept : protected_function_result(nullptr) {}
 		protected_function_result(lua_State* Ls, int idx = -1, int retnum = 0, int popped = 0, call_status pferr = call_status::ok) noexcept
-		: L(Ls), index(idx), returncount(retnum), popcount(popped), err(pferr) {
+		: L( Ls), index(idx), returncount(retnum), popcount(popped), err(pferr) {
 		}
 
 		// We do not want anyone to copy these around willy-nilly
