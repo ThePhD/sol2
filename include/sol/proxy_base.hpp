@@ -49,6 +49,11 @@ namespace sol {
 			return super.template get<std::string>();
 		}
 
+		operator std::string_view() const {
+			const Super& super = *static_cast<const Super*>(static_cast<const void*>(this));
+			return super.template get<std::string_view>();
+		}
+
 		template <typename T, meta::enable<meta::neg<meta::is_string_constructible<T>>, is_proxy_primitive<meta::unqualified_t<T>>> = meta::enabler>
 		operator T() const {
 			const Super& super = *static_cast<const Super*>(static_cast<const void*>(this));
