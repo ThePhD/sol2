@@ -407,8 +407,7 @@ namespace sol { namespace stack {
 				bool isnil = false;
 				for (int vi = 0; vi < lua_size<V>::value; ++vi) {
 					lua_pushinteger(L, i);
-					lua_gettable(L, index);
-					type vt = type_of(L, -1);
+					type vt = static_cast<type>(lua_gettable(L, index));
 					isnil = vt == type::lua_nil;
 					if (isnil) {
 						if (i == 0) {
@@ -523,8 +522,7 @@ namespace sol { namespace stack {
 				bool isnil = false;
 				for (int vi = 0; vi < lua_size<V>::value; ++vi) {
 					lua_pushinteger(L, i);
-					lua_gettable(L, index);
-					type t = type_of(L, -1);
+					type t = static_cast<type>(lua_gettable(L, index));
 					isnil = t == type::lua_nil;
 					if (isnil) {
 						if (i == 0) {
@@ -905,8 +903,8 @@ namespace sol { namespace stack {
 			bool has_derived = derive<T>::value || weak_derive<T>::value;
 			if (has_derived) {
 				if (lua_getmetatable(L, index) == 1) {
-					lua_getfield(L, -1, &detail::base_class_cast_key()[0]);
-					if (type_of(L, -1) != type::lua_nil) {
+					type t = static_cast<type>(lua_getfield(L, -1, &detail::base_class_cast_key()[0]));
+					if (t != type::lua_nil) {
 						void* basecastdata = lua_touserdata(L, -1);
 						detail::inheritance_cast_function ic = reinterpret_cast<detail::inheritance_cast_function>(basecastdata);
 						// use the casting function to properly adjust the pointer for the desired T

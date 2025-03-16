@@ -221,9 +221,9 @@ namespace sol {
 #if SOL_LUA_VERSION_I_ < 502
 		if (L_ == nullptr)
 			return backup_if_unsupported_;
-		lua_getglobal(L_, detail::default_main_thread_name());
+		type t = static_cast<type>(lua_getglobal(L_, detail::default_main_thread_name()));
 		auto pp = stack::pop_n(L_, 1);
-		if (type_of(L_, -1) == type::thread) {
+		if (t == type::thread) {
 			return lua_tothread(L_, -1);
 		}
 		return backup_if_unsupported_;

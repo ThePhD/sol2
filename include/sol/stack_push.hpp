@@ -794,7 +794,7 @@ namespace sol { namespace stack {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK)
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_string);
 #endif // make sure stack doesn't overflow
-			lua_pushlstring(L, str, std::char_traits<char>::length(str));
+			lua_pushlstring(L, str, N - 1);
 			return 1;
 		}
 
@@ -875,7 +875,7 @@ namespace sol { namespace stack {
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_string);
 #endif // make sure stack doesn't overflow
 			const char* str_as_char = reinterpret_cast<const char*>(static_cast<const char8_t*>(str));
-			lua_pushlstring(L, str_as_char, std::char_traits<char>::length(str_as_char));
+			lua_pushlstring(L, str_as_char, N - 1);
 			return 1;
 		}
 
