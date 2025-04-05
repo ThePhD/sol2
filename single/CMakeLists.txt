@@ -32,7 +32,7 @@ file(GLOB sol2_generated_header_sources ${CMAKE_CURRENT_SOURCE_DIR}/../include/*
 # generate the single header if we can find the python3 interpreter
 add_custom_command(
 	COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/include/sol"
-	COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/single.py" --input "${CMAKE_CURRENT_SOURCE_DIR}/../include" --output "${CMAKE_CURRENT_BINARY_DIR}/include/sol/sol.hpp"
+	COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/single.py" --input "${CMAKE_CURRENT_SOURCE_DIR}/../include" --output "${CMAKE_CURRENT_BINARY_DIR}/include/sol/sol.hpp"
 	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/single.py" "${sol2_generated_header_sources}"
 	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/include/sol/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/include/sol/forward.hpp" "${CMAKE_CURRENT_BINARY_DIR}/include/sol/config.hpp")
 add_custom_target(sol2_single_header_generator ALL
