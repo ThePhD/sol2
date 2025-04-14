@@ -151,11 +151,13 @@ def is_include_guard(line):
 
 
 def get_revision():
-	return os.popen('git rev-parse --short HEAD').read().strip()
+	with os.popen('git rev-parse --short HEAD') as f:
+	    return f.read().strip()
 
 
 def get_version():
-	return os.popen('git describe --tags --abbrev=0').read().strip()
+	with os.popen('git describe --tags --abbrev=0') as f:
+	    return f.read().strip()
 
 
 def process_file(filename, out):
