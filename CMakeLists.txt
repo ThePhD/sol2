@@ -276,6 +276,10 @@ if (sol2-is-top-level-project)
 		set(LUA_LIBRARIES ${lualib})
 	endif()
 
+	if(NOT TARGET Lua::Lua)
+		add_library(Lua::Lua ALIAS ${lualib})
+	endif()
+
 	if (NOT LUA_FOUND AND NOT LUABUILD_FOUND)
 		message(FATAL_ERROR "sol2 Lua \"${SOL2_LUA_VERSION}\" not found and could not be targeted for building")
 	endif()
