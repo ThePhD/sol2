@@ -502,7 +502,11 @@ namespace sol { namespace u_detail {
 					stateless_reference* target = nullptr;
 					{
 						stack_reference k = stack::get<stack_reference>(L, 2);
+#if __cpp_lib_generic_unordered_lookup >= 201811L
 						auto it = self.auxiliary_keys.find(k);
+#else
+						auto it = self.auxiliary_keys.find(basic_reference(k));
+#endif
 						if (it != self.auxiliary_keys.cend()) {
 							target = &it->second;
 						}

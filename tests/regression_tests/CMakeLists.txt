@@ -23,4 +23,5 @@
 # # # # sol2 tests
 
 add_subdirectory(1011)
+add_subdirectory(1716)
 add_subdirectory(simple)

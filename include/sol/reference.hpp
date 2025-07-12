@@ -828,6 +828,8 @@ namespace sol {
 		stateless_reference_equals(lua_State* L_) noexcept : stateless_stack_reference_equals(L_) {
 		}
 
+		using stateless_stack_reference_equals::operator();
+
 		bool operator()(const lua_nil_t& lhs, const stateless_reference& rhs) const noexcept {
 			return rhs.equals(lua_state(), lhs);
 		}
@@ -837,6 +839,14 @@ namespace sol {
 		}
 
 		bool operator()(const stateless_reference& lhs, const stateless_reference& rhs) const noexcept {
+			return lhs.equals(lua_state(), rhs);
+		}
+
+		bool operator()(const stateless_stack_reference& lhs, const stateless_reference& rhs) const noexcept {
+			return rhs.equals(lua_state(), lhs);
+		}
+
+		bool operator()(const stateless_reference& lhs, const stateless_stack_reference& rhs) const noexcept {
 			return lhs.equals(lua_state(), rhs);
 		}
 	};
@@ -877,6 +887,8 @@ namespace sol {
 
 		stateless_reference_hash(lua_State* L_) noexcept : stateless_stack_reference_hash(L_) {
 		}
+
+		using stateless_stack_reference_hash::operator();
 
 		result_type operator()(const stateless_reference& lhs) const noexcept {
 			std::hash<const void*> h;
