@@ -22,7 +22,7 @@
 
 # # # # sol3, single
 # # # Required minimum version statement
-cmake_minimum_required(VERSION 3.26.0)
+cmake_minimum_required(VERSION 3.22)
 
 find_package(Python3 REQUIRED)
 
