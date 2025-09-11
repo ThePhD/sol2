@@ -27,6 +27,8 @@
 #include <sol/forward.hpp>
 #include <sol/base_traits.hpp>
 #include <sol/tuple.hpp>
+#include <cstddef>
+#include <tuple>
 
 namespace sol { namespace meta {
 	namespace meta_detail {
@@ -47,7 +49,7 @@ namespace sol { namespace meta {
 
 		template <std::size_t I>
 		struct void_tuple_element<I, std::tuple<>> {
-			typedef void type;
+			using type = void;
 		};
 
 		template <std::size_t I, typename T>
@@ -510,13 +512,14 @@ namespace sol { namespace meta {
 			inline static constexpr bool is_member_function = false;
 			inline static constexpr std::size_t arity = 1;
 			inline static constexpr std::size_t free_arity = 2;
-			typedef std::tuple<Arg> args_tuple;
-			typedef types<Arg> args_list;
-			typedef types<T, Arg> free_args_list;
-			typedef meta::tuple_types<return_type> returns_list;
-			typedef return_type(function_type)(T&, return_type);
-			typedef return_type (*function_pointer_type)(T&, Arg);
-			typedef return_type (*free_function_pointer_type)(T&, Arg);
+			using args_tuple = std::tuple<Arg>;
+			using args_list = types<Arg>;
+			using free_args_list = types<T, Arg>;
+		    using returns_list = meta::tuple_types<return_type>;
+			// This is probably a mistake prolly meant (T& , Arg)
+			using function_type =  return_type(T&, return_type);
+			using function_pointer_type = return_type (*)(T&, Arg);
+			using free_function_pointer_type = function_pointer_type;
 			template <std::size_t i>
 			using arg_at = void_tuple_element_t<i, args_tuple>;
 		};
