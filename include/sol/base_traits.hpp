@@ -36,8 +36,13 @@ namespace sol {
 		using sfinae_yes_t = std::true_type;
 		using sfinae_no_t = std::false_type;
 
-		template <typename...>
-		using void_t = void;
+		template <auto C>
+		using constant = std::integral_constant<decltype(C), C>;
+
+		template <bool B>
+		using boolean = std::bool_constant<B>;
+
+		using std::void_t;
 
 		template <typename T>
 		using unqualified = std::remove_cv<std::remove_reference_t<T>>;
@@ -115,39 +120,40 @@ namespace sol {
 
 		namespace meta_detail {
 			template <typename T, template <typename...> class Templ>
-			struct is_specialization_of : std::false_type { };
-			template <typename... T, template <typename...> class Templ>
-			struct is_specialization_of<Templ<T...>, Templ> : std::true_type { };
+			inline constexpr bool is_specialization_of_v = false;
+
+			template <typename... Ts, template <typename...> class Templ>
+			inline constexpr bool is_specialization_of_v<Templ<Ts...>, Templ> = true;
+
 		} // namespace meta_detail
 
 		template <typename T, template <typename...> class Templ>
-		using is_specialization_of = meta_detail::is_specialization_of<std::remove_cv_t<T>, Templ>;
+		inline constexpr bool is_specialization_of_v = meta_detail::is_specialization_of_v<std::remove_cv_t<T>, Templ>;
 
 		template <typename T, template <typename...> class Templ>
-		inline constexpr bool is_specialization_of_v = is_specialization_of<std::remove_cv_t<T>, Templ>::value;
+		using is_specialization_of = boolean<is_specialization_of_v<T, Templ>>;
 
 		template <typename T>
 		struct identity {
-			typedef T type;
+			using type = T;
 		};
 
 		template <typename T>
 		using identity_t = typename identity<T>::type;
 
 		template <typename T>
-		using is_builtin_type = std::integral_constant<bool, std::is_arithmetic<T>::value || std::is_pointer<T>::value || std::is_array<T>::value>;
+		using is_builtin_type = boolean<std::is_arithmetic_v<T> || std::is_pointer_v<T> || std::is_array_v<T>>;
 
 		namespace meta_detail {
 			template <typename T, typename = void>
-			struct has_internal_marker_impl : std::false_type { };
-			template <typename T>
-			struct has_internal_marker_impl<T, void_t<typename T::SOL_INTERNAL_UNSPECIALIZED_MARKER_>> : std::true_type { };
+			constexpr inline bool has_internal_marker_v = false;
 
 			template <typename T>
-			using has_internal_marker = has_internal_marker_impl<T>;
+			constexpr inline bool has_internal_marker_v<T, void_t<typename T::SOL_INTERNAL_UNSPECIALIZED_MARKER_>> = true;
 
 			template <typename T>
-			constexpr inline bool has_internal_marker_v = has_internal_marker<T>::value;
+			using has_internal_marker = boolean<has_internal_marker_v<T>>;
+
 		} // namespace meta_detail
 
 	} // namespace meta
