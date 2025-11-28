@@ -53,12 +53,12 @@ namespace sol {
 		}
 
 		inline decltype(auto) base_class_index_propogation_key() {
-			static const auto& key = u8"\xF0\x9F\x8C\xB2.index";
+			static const auto& key = u8"\U0001F332.index";
 			return key;
 		}
 
 		inline decltype(auto) base_class_new_index_propogation_key() {
-			static const auto& key = u8"\xF0\x9F\x8C\xB2.new_index";
+			static const auto& key = u8"\U0001F332.new_index";
 			return key;
 		}
 
