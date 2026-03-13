@@ -74,7 +74,6 @@ BraceWrapping:
   AfterControlStatement: false
   AfterClass: false
   AfterNamespace: false
-  AfterStruct: false
   AfterUnion: false
   BeforeElse: true
   BeforeCatch: true

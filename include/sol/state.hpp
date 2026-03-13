@@ -27,6 +27,14 @@
 #include <sol/state_view.hpp>
 #include <sol/thread.hpp>
 
+inline lua_State* sol_lua_newstate(lua_Alloc f, void* ud, [[maybe_unused]] unsigned seed = 0) {
+#if LUA_VERSION_NUM >= 505
+	return ::lua_newstate(f, ud, seed);
+#else
+	return ::lua_newstate(f, ud);
+#endif
+}
+
 namespace sol {
 
 	class state : private std::unique_ptr<lua_State, detail::state_deleter>, public state_view {
@@ -39,7 +47,7 @@ namespace sol {
 		}
 
 		state(lua_CFunction panic, lua_Alloc alfunc, void* alpointer = nullptr)
-		: unique_base(lua_newstate(alfunc, alpointer)), state_view(unique_base::get()) {
+		: unique_base(sol_lua_newstate(alfunc, alpointer)), state_view(unique_base::get()) {
 			set_default_state(unique_base::get(), panic);
 		}
 

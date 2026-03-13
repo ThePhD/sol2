@@ -35,7 +35,8 @@ include(Common/Core)
 set(LUA_VANILLA_5.1_LATEST_VERSION 5.1.5)
 set(LUA_VANILLA_5.2_LATEST_VERSION 5.2.4)
 set(LUA_VANILLA_5.3_LATEST_VERSION 5.3.6)
-set(LUA_VANILLA_5.4_LATEST_VERSION 5.4.4)
+set(LUA_VANILLA_5.4_LATEST_VERSION 5.4.8)
+set(LUA_VANILLA_5.5_LATEST_VERSION 5.5.0)
 
 # Clean up some variables
 if (LUA_VERSION MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$")
@@ -52,6 +53,8 @@ elseif (LUA_VERSION MATCHES "([0-9]+)\\.([0-9]+)")
 			set(LUA_VANILLA_VERSION ${LUA_VANILLA_5.3_LATEST_VERSION})
 		elseif (${CMAKE_MATCH_2} EQUAL 4)
 			set(LUA_VANILLA_VERSION ${LUA_VANILLA_5.4_LATEST_VERSION})
+		elseif (${CMAKE_MATCH_2} EQUAL 5)
+			set(LUA_VANILLA_VERSION ${LUA_VANILLA_5.5_LATEST_VERSION})
 		else()			
 			# default to whatever the first two
 			# numbers happen to be, plus build 0
@@ -143,8 +146,19 @@ elseif (LUA_VANILLA_VERSION MATCHES "^5\\.4")
 		set(LUA_VANILLA_LUAC_SOURCES luac.c)
 	endif()
 	set(LUA_VANILLA_GENERATE_LUA_HPP false)
+elseif (LUA_VANILLA_VERSION MATCHES "^5\\.5")
+	set(LUA_VANILLA_LIB_SOURCES lapi.c lauxlib.c lbaselib.c lcode.c lcorolib.c 
+		lctype.c ldblib.c ldebug.c ldo.c ldump.c lfunc.c lgc.c linit.c liolib.c
+		llex.c lmathlib.c lmem.c loadlib.c lobject.c lopcodes.c loslib.c
+		lparser.c lstate.c lstring.c lstrlib.c ltable.c ltablib.c ltm.c lundump.c
+		lutf8lib.c lvm.c lzio.c)
+	set(LUA_VANILLA_LUA_SOURCES lua.c)
+	if (LUA_BUILD_LUA_COMPILER)
+		set(LUA_VANILLA_LUAC_SOURCES luac.c)
+	endif()
+	set(LUA_VANILLA_GENERATE_LUA_HPP false)
 else()
-	MESSAGE(WARNING "Using Lua 5.4.4 file list for ${LUA_VERSION} version")
+	MESSAGE(WARNING "Using Lua 5.5.0 file list for ${LUA_VERSION} version")
 	set(LUA_VANILLA_LIB_SOURCES lapi.c lauxlib.c lbaselib.c lcode.c lcorolib.c 
 		lctype.c ldblib.c ldebug.c ldo.c ldump.c lfunc.c lgc.c linit.c liolib.c
 		llex.c lmathlib.c lmem.c loadlib.c lobject.c lopcodes.c loslib.c
@@ -173,14 +187,18 @@ if (LUA_LOCAL_DIR)
 	set(LUA_VANILLA_INCLUDE_DIRS ${LUA_VANILLA_INCLUDE_DIRS} "${LUA_VANILLA_SOURCE_DIR}/src")
 else()
 	include(FetchContent)
-	FetchContent_Declare(
-		lua-vanilla
-		URL ${LUA_VANILLA_DOWNLOAD_URL})
+	FetchContent_Declare(lua-vanilla URL ${LUA_VANILLA_DOWNLOAD_URL})
 	FetchContent_GetProperties(lua-vanilla)
 	if ( NOT lua-vanilla_POPULATED)
 		# Fetch the content using previously declared details
-		FetchContent_Populate(lua-vanilla)
 		# do not add_subdirectory / build: we are JUST using ti as a download step!
+		# cmake >= 3.30 FetchContent_MakeAvailable will skip add_subdirectory silent when
+		# CMakeLists not present in lua-vanilla
+		if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.30)
+			FetchContent_MakeAvailable(lua-vanilla)
+		else()
+			FetchContent_Populate(lua-vanilla)
+		endif()
 	endif()
 	list(TRANSFORM LUA_VANILLA_LIB_SOURCES PREPEND "${lua-vanilla_SOURCE_DIR}/src/")
 	list(TRANSFORM LUA_VANILLA_LUA_SOURCES PREPEND "${lua-vanilla_SOURCE_DIR}/src/")
