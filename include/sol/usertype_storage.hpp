@@ -1071,12 +1071,9 @@ namespace sol { namespace u_detail {
 			case submetatable_type::named:
 				break;
 			case submetatable_type::unique:
-				if constexpr (std::is_destructible_v<T>) {
-					stack::set_field<false, true>(L_, meta_function::garbage_collect, &detail::unique_destroy<T>, t.stack_index());
-				}
-				else {
-					stack::set_field<false, true>(L_, meta_function::garbage_collect, &detail::cannot_destroy<T>, t.stack_index());
-				}
+				// the userdata holds the unique pointer, not a T: its stored destructor destroys the pointer,
+				// which works whether or not T itself is destructible (e.g. with a protected destructor)
+				stack::set_field<false, true>(L_, meta_function::garbage_collect, &detail::unique_destroy<T>, t.stack_index());
 				break;
 			case submetatable_type::value:
 			case submetatable_type::const_value:
